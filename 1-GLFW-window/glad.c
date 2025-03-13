@@ -1776,6 +1776,7 @@ static void find_coreGL(void) {
 
     GLVersion.major = major; GLVersion.minor = minor;
     max_loaded_major = major; max_loaded_minor = minor;
+	// 判断是否支持 OpenGL 特定版本. ==> 小于等于glfwWindowHint传入的版本都会计算为1
 	GLAD_GL_VERSION_1_0 = (major == 1 && minor >= 0) || major > 1;
 	GLAD_GL_VERSION_1_1 = (major == 1 && minor >= 1) || major > 1;
 	GLAD_GL_VERSION_1_2 = (major == 1 && minor >= 2) || major > 1;
