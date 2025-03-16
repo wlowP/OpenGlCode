@@ -9,10 +9,11 @@ add_executable(OpenGlCode src/glad.c main.cpp)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 # 加载源文件
 link_directories(${PROJECT_SOURCE_DIR}/lib)
-# 将lib目录下的glfw3.dll文件链接到OpenGlCode可执行文件
+# 将lib目录下的glfw3.dll文件链接到OpenGlCode可执行文件(动态链接)
 target_link_libraries(OpenGlCode ${PROJECT_SOURCE_DIR}/lib/glfw3.dll)
 
 # ======资源文件拷贝======
+# 需要将用到的动态链接库glfw3.dll拷贝到输出目录
 # 获取./lib/glfw3.dll作为文件列表, 名为ASSETS
 file(GLOB ASSETS ${PROJECT_SOURCE_DIR}/lib/glfw3.dll)
 # 将ASSETS中的文件拷贝到输出目录

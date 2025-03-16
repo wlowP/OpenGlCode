@@ -128,6 +128,8 @@ int main()
 
     // render loop
     // -----------
+    // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
+    glClearColor(0.3f, 0.2f, 0.6f, 1.0f);
     while (!glfwWindowShouldClose(window))
     {
         // input
@@ -136,7 +138,7 @@ int main()
 
         // render
         // ------
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        // 执行擦除画面的操作
         glClear(GL_COLOR_BUFFER_BIT);
 
         // draw our first triangle
@@ -147,6 +149,9 @@ int main()
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
+        // 交换glfw的前后缓冲区
+        // glfw的双缓冲区机制: 前缓冲区用于显示, 后缓冲区用于绘制. 交换后缓冲区和前缓冲区的指针, 使得后缓冲区成为前缓冲区
+        // 这样在后缓冲区绘制新的图像, 而前缓冲区仍然显示旧的图像. 这样就可以避免闪烁现象(避免被看到绘制的过程)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

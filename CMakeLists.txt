@@ -10,9 +10,17 @@ project(OpenGlCode)
 # 本工程支持的C++版本
 set(CMAKE_CXX_STANDARD 20)
 
+# glfw, glad的库文件
+# 加载头文件. 其中的GLFW目录是glfw3的头文件目录, glad和KHR是glad的头文件目录
+include_directories(${PROJECT_SOURCE_DIR}/include)
+# 加载源文件
+link_directories(${PROJECT_SOURCE_DIR}/lib)
+
 # =======================================================
 # =======可执行的子项目====================================
-# =======glfw, glad的库已在experiment/model中配置=========
+# experiment/model项目的glfw, glad库文件单独配置了, 用的是动态链接dll
 # =======================================================
 add_subdirectory(experiment/model)
 add_subdirectory(1-GLFW-window)
+add_subdirectory(2-glad)
+add_subdirectory(3-Application)
