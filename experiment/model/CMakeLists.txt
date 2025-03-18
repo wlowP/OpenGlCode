@@ -2,7 +2,7 @@
 # OpenGlCode为输出的exe程序的名称, main.cpp和src/glad.c为构建这个可执行文件所需的源文件
 # ==> 将main.cpp和src/glad.c编译成可执行的OpenGlCode.exe
 # 其中glad.c是glad的源文件, 实则为glad的依赖库
-add_executable(OpenGlCode src/glad.c main.cpp)
+add_executable(model src/glad.c main.cpp)
 
 # 加载头文件
 # 其中的GLFW目录是glfw3的头文件目录, glad和KHR是glad的头文件目录
@@ -10,7 +10,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # 加载源文件
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 # 将lib目录下的glfw3.dll文件链接到OpenGlCode可执行文件(动态链接)
-target_link_libraries(OpenGlCode ${PROJECT_SOURCE_DIR}/lib/glfw3.dll)
+target_link_libraries(model ${PROJECT_SOURCE_DIR}/lib/glfw3.dll)
 
 # ======资源文件拷贝======
 # 需要将用到的动态链接库glfw3.dll拷贝到输出目录

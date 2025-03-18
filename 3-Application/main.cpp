@@ -4,7 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "exception/error_check.h"
+// 这里引用的是2-glad中的error_check.h, 在CMakeLists.txt中设置了include路径
+#include "error_check.h"
 #include "application/Application.h"
 
 // 窗口尺寸变化的回调
