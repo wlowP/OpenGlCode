@@ -27,6 +27,68 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
     }
 }
 
+// 定义和编译着色器
+void prepareShader() {
+    // 顶点着色器和片段着色器的源代码
+    const char* vertexShaderSource = "#version 460 core\n"
+                                     "layout (location = 0) in vec3 aPos;\n"
+                                     "void main()\n"
+                                     "{\n"
+                                     "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+                                     "}\0";
+    const char* fragmentShaderSource = "#version 330 core\n"
+                                       "out vec4 FragColor;\n"
+                                       "void main()\n"
+                                       "{\n"
+                                       "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                       "}\n\0";
+    // 1. 创建Shader程序
+    GLuint vertexShader, fragmentShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    // 输入代码
+    // length为nullptr表示字符串以'\0'结尾('\0'结尾表示自然结尾, 无需传递长度)
+    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+
+    // 编译Shader并检查编译结果
+    int success = 0;
+    char infoLog[1024];
+    glCompileShader(vertexShader);
+    // 检查编译结果
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, sizeof(infoLog), nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+    glCompileShader(fragmentShader);
+    // 检查编译结果
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, sizeof(infoLog), nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    // 2. 链接Shader程序
+    // 创建Shader程序对象
+    GLuint shaderProgram = glCreateProgram();
+    // 将编译好的vs和fs附加到Shader程序对象上
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    // 链接Shader程序, 形成一个完整的可执行Shader程序
+    glLinkProgram(shaderProgram);
+    // 检查链接结果
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, sizeof(infoLog), nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+    // 清理
+    // 编译链接形成可执行Shader程序后, 着色器对象就不需要了
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+}
+
 // 准备VBO
 // 创建, 销毁, 绑定
 void prepareVBO() {
@@ -149,10 +211,11 @@ void prepareInterleavedBuffer() {
  * 3. 封装单例的OpenGL应用类
  *
  * 4. VBO的基本使用(创建, 销毁, 绑定)
+ * 5. 着色器的编辑和编译
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "VBO+VAO的基本使用")) {
+    if (!APP->init(800, 600, "着色器的编译")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -168,6 +231,8 @@ int main() {
     // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
+    // 编译着色器
+    prepareShader();
     // 初始化VBO等资源
     // prepareSingleBuffer();
     prepareInterleavedBuffer();

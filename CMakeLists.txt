@@ -16,6 +16,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # 加载源文件
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 
+# 设置静态链接, 以免编译时提示找不到libgcc等动态链接库
+#set(CMAKE_EXE_LINKER_FLAGS -static)
+
 # =======================================================
 # =======可执行的子项目====================================
 # experiment/model项目的glfw, glad库文件单独配置了, 用的是动态链接dll
@@ -26,3 +29,4 @@ add_subdirectory(2-glad)
 add_subdirectory(3-Application)
 add_subdirectory(4-VBO)
 add_subdirectory(5-VAO)
+add_subdirectory(6-Shader)
