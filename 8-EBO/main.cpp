@@ -235,6 +235,47 @@ void prepareMultiTriangleBuffer() {
     GL_CALL(glBindVertexArray(0));
 }
 
+// 准备EBO
+void prepareEBOBuffer() {
+    float positions[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f,
+         0.5f,  0.5f, 0.0f
+    };
+    // 顶点索引顺序数据, 方便复用顶点
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 1, 3
+    };
+
+    GLuint VBO, EBO;
+    // VBO
+    GL_CALL(glGenBuffers(1, &VBO));
+    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+    GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
+
+    // 创建EBO. 注意target是GL_ELEMENT_ARRAY_BUFFER
+    GL_CALL(glGenBuffers(1, &EBO));
+    GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
+    GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+
+    // VAO
+    GL_CALL(glGenVertexArrays(1, &VAO));
+    GL_CALL(glBindVertexArray(VAO));
+
+    // 绑定VBO, EBO, 加入属性描述信息
+    // GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+    GL_CALL(glEnableVertexAttribArray(0));
+    GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr));
+
+    // 绑定EBO, 📌📌这一行不可以省略
+    // 📌📌因为glVertexAttribPointer内会自动查询并绑定当前的VBO, 但不会查询EBO
+    GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
+    // 解绑VAO
+    GL_CALL(glBindVertexArray(0));
+}
+
 // 执行渲染操作
 void render() {
     // 画布清理操作也算渲染操作
@@ -245,38 +286,18 @@ void render() {
     glUseProgram(shaderProgram);
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
-    /*
-     * 发出绘制指令
-     * 参数一: 绘制方式. GL_TRIANGLES: 多个三角形; GL_TRIANGLE_STRIP: 三角形带; GL_TRIANGLE_FAN: 三角形扇
-     *                  GL_LINES: 多条线段; GL_LINE_STRIP: 线段带; GL_LINE_LOOP: 线段环
-     * 参数二: 起始索引. 0: 从第一个顶点开始绘制
-     * 参数三: 顶点数量. 3: 绘制3个顶点
-     *      📌📌如果VBO有足够的数据, 当顶点数量设为3n时, 会连续绘制n个三角形
-     * 由于使用的是NDC坐标, 当窗体尺寸变化时三角形也会发生拉伸
-     * **前提是在framebufferSizeCallback中更新了视口尺寸
-     */
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 }
 
 /*
- * 1. 一个简单的GLFW窗口, 并且使用基本的glad函数
- * 2. 需要先使用glad加载所有当前版本所需的OpenGL函数指针(不同厂家显卡的OpenGL函数指针不同)
- *
- * 使用glGetError函数获取调用gl函数过程中出现的错误代码
- *
- * 将错误检测封装为宏, 并进一步封装为预编译宏以达到一键开关功能的效果
- *
- * 3. 封装单例的OpenGL应用类
- *
- * 4. VBO的基本使用(创建, 销毁, 绑定)
- * 5. 着色器的编辑和编译
- * 6. DrawArray画三角形
- *      画三角形的三种模式: GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN
- *      画直线的两种模式: GL_LINES, GL_LINE_STRIP, GL_LINE_LOOP
+* EBO: 代表一段用于存储顶点绘制顺序索引号的显存区域
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "画三角形")) {
+    if (!APP->init(800, 600, "EBO-使用顺序索引绘制")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -297,7 +318,8 @@ int main() {
     // 初始化VBO等资源
     // prepareSingleBuffer();
     // prepareInterleavedBuffer();
-    prepareMultiTriangleBuffer();
+    // prepareMultiTriangleBuffer();
+    prepareEBOBuffer();
 
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
