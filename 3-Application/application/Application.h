@@ -4,8 +4,6 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#endif //APPLICATION_H
-
 #include <cstdint>
 #include <iostream>
 
@@ -87,3 +85,5 @@ private:
 
     Application(); // 私有化构造方法
 };
+
+#endif //APPLICATION_H

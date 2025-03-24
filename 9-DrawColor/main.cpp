@@ -35,15 +35,19 @@ void prepareShader() {
     // 顶点着色器和片段着色器的源代码
     const char* vertexShaderSource = "#version 460 core\n"
                                      "layout (location = 0) in vec3 aPos;\n"
+                                     "layout (location = 1) in vec3 aColor;\n"
+                                     "out vec3 color;\n"
                                      "void main()\n"
                                      "{\n"
                                      "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+                                     "   color = aColor;\n"
                                      "}\0";
-    const char* fragmentShaderSource = "#version 330 core\n"
+    const char* fragmentShaderSource = "#version 460 core\n"
                                        "out vec4 FragColor;\n"
+                                       "in vec3 color;\n"
                                        "void main()\n"
                                        "{\n"
-                                       "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                       "   FragColor = vec4(color, 1.0f);\n"
                                        "}\n\0";
     // 1. 创建Shader程序
     GLuint vertexShader, fragmentShader;
@@ -243,17 +247,26 @@ void prepareEBOBuffer() {
          0.0f,  0.5f, 0.0f,
          0.5f,  0.5f, 0.0f
     };
+    float colors[] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+    };
     // 顶点索引顺序数据, 方便复用顶点
     unsigned int indices[] = {
         0, 1, 2,
         2, 1, 3
     };
 
-    GLuint VBO, EBO;
+    GLuint position, color, EBO;
     // VBO
-    GL_CALL(glGenBuffers(1, &VBO));
-    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+    GL_CALL(glGenBuffers(1, &position));
+    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, position));
     GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
+
+    GL_CALL(glGenBuffers(1, &color));
+    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, color));
+    GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW));
 
     // 创建EBO. 注意target是GL_ELEMENT_ARRAY_BUFFER
     GL_CALL(glGenBuffers(1, &EBO));
@@ -265,9 +278,13 @@ void prepareEBOBuffer() {
     GL_CALL(glBindVertexArray(VAO));
 
     // 绑定VBO, EBO, 加入属性描述信息
-    // GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, position));
     GL_CALL(glEnableVertexAttribArray(0));
     GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr));
+
+    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, color));
+    GL_CALL(glEnableVertexAttribArray(1));
+    GL_CALL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr));
 
     // 绑定EBO, 📌📌这一行不可以省略
     // 📌📌因为glVertexAttribPointer内会自动查询并绑定当前的VBO, 但不会查询EBO
@@ -293,7 +310,10 @@ void render() {
 }
 
 /*
-* EBO: 代表一段用于存储顶点绘制顺序索引号的显存区域
+* 修改顶点着色器和片元着色器, 使其能够读取颜色信息.
+*
+* 默认情况下顶点之间的颜色会通过插值来计算, 产生渐变效果
+*   这一过程发生在渲染管线的光栅化阶段
  */
 int main() {
     APP->test();
