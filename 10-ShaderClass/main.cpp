@@ -79,12 +79,12 @@ void prepareSingleBuffer() {
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, verticeVBO));
     GL_CALL(glEnableVertexAttribArray(0));
     // 设置具体的属性描述信息
-    GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
+    GL_CALL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr));
 
     // 颜色属性
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorVBO));
     GL_CALL(glEnableVertexAttribArray(1));
-    GL_CALL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
+    GL_CALL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr));
 
     // 设置完后解绑VAO, 防止后续的 OpenGL 操作意外地修改当前绑定的 VAO
     GL_CALL(glBindVertexArray(0));
