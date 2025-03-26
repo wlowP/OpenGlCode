@@ -16,8 +16,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # 加载源文件
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 
-# 设置静态链接, 以免编译时提示找不到libgcc等动态链接库
-#set(CMAKE_EXE_LINKER_FLAGS -static)
+# 设置静态链接, 以免直接运行exe时提示找不到libgcc等动态链接库
+set(CMAKE_EXE_LINKER_FLAGS -static)
 
 # =======================================================
 # =======可执行的子项目====================================
@@ -34,3 +34,4 @@ add_subdirectory(7-DrawArray)
 add_subdirectory(8-EBO)
 add_subdirectory(9-DrawColor)
 add_subdirectory(10-ShaderClass)
+add_subdirectory(11-Uniform)

@@ -280,7 +280,7 @@ void prepareEBOBuffer() {
 void render() {
     // 画布清理操作也算渲染操作
     // 执行画布清理操作(用glClearColor设置的颜色来清理(填充)画布)
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
     // 📌📌绑定当前的shaderProgram(选定一个材质)
     glUseProgram(shaderProgram);

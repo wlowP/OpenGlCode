@@ -12,7 +12,7 @@
 // 省得每次调用gl函数之后都要再手动调用errorCheck
 #define GL_CALL(function) \
 function; \
-errorCheck();
+errorCheck()
 #else
 #define GL_CALL(function) function
 #endif

@@ -20,6 +20,8 @@ public:
     void begin(); // 开始使用当前的着色器
 
     void end(); // 结束使用当前的着色器
+
+    GLuint getProgram() const { return program; } // 获取当前的program
 private:
     // 对于shader程序, 检查编译错误; 对于program, 检查链接错误
     void checkShaderError(GLuint target, const std::string& type);

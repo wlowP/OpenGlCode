@@ -50,8 +50,6 @@ Shader::Shader(const char* vsSrcPath, const char* fsSrcPath) {
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
 
     // 编译Shader并检查编译结果
-    int success = 0;
-    char infoLog[1024];
     glCompileShader(vertexShader);
     // 检查编译结果
     checkShaderError(vertexShader, "COMPILE");

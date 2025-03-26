@@ -297,7 +297,7 @@ void prepareEBOBuffer() {
 void render() {
     // 画布清理操作也算渲染操作
     // 执行画布清理操作(用glClearColor设置的颜色来清理(填充)画布)
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT))
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
     // 📌📌绑定当前的shaderProgram(选定一个材质)
     glUseProgram(shaderProgram);
@@ -317,7 +317,7 @@ void render() {
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "EBO-使用顺序索引绘制")) {
+    if (!APP->init(800, 600, "着色器加载颜色属性")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }

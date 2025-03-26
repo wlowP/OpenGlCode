@@ -1,17 +1,19 @@
 #include <iostream>
 
-#include "GLconfig/core.h"
+#include <core.h>
 
 // 这里引用的是2-glad中的error_check.h, 在CMakeLists.txt中设置了include路径
 #include "error_check.h"
 // 3-Application中的Application.h
 #include "Application.h"
-#include "GLconfig/shader.h"
+#include <shader.h>
 
 // 将VAO和装载shader的程序提升到全局变量
 GLuint VAO;
 // 全局的Shader对象
 Shader* shader = nullptr;
+// 向GPU传递系统时间的uniform变量地址
+GLuint timeLocation;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -37,6 +39,8 @@ void prepareShader() {
         "assets/shader/vertex.glsl",
         "assets/shader/fragment.glsl"
         );
+    // 获取Uniform变量的地址
+    timeLocation = glGetUniformLocation(shader->getProgram(), "uTime");
 }
 
 // 准备EBO
@@ -106,19 +110,24 @@ void render() {
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
 
-    // glDrawArrays(GL_TRIANGLES, 0, 6);
+    // 每一帧将程序运行时间传递给GPU. glfwGetTime()返回时间的单位是秒(double)
+    glUniform1f(timeLocation, glfwGetTime());
+    std::cout << "time: " << glfwGetTime() << std::endl;
 
+    // glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     shader->end();
 }
 
 /*
- * 着色器封装为一个类, 实现文件读取, 编译链接, 查错等功能
+ * 使用uniform变量来控制颜色随时间变化
+ * 📌📌更新uniform变量时, 需要先绑定shaderProgram
+ * VS和FS程序中可以同时使用同一个uniform变量
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "着色器API的封装")) {
+    if (!APP->init(800, 600, "uniform变量 - CPU与GPU的通信")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -142,6 +151,7 @@ int main() {
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
     while (APP->update()) {
+
         // 渲染操作
         render();
     }
