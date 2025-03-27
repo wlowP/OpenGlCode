@@ -305,7 +305,7 @@ void render() {
     glBindVertexArray(VAO);
 
     // glDrawArrays(GL_TRIANGLES, 0, 6);
-
+    // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 

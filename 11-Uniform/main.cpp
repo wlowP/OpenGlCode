@@ -35,10 +35,12 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
 
 // 定义和编译着色器
 void prepareShader() {
+    // 📌📌尽量将简单的渲染计算放到GPU(着色器代码)中去执行
+    // 于是切换加载的shader源代码(或者直接创建并使用多个shaderProgram)即可实现不同的效果
     shader = new Shader(
-        "assets/shader/vertex.glsl",
-        "assets/shader/fragment.glsl"
-        );
+        "assets/shader-move/vertex.glsl",
+        "assets/shader-move/fragment.glsl"
+    );
     // 获取Uniform变量的地址
     timeLocation = glGetUniformLocation(shader->getProgram(), "uTime");
 }
@@ -46,10 +48,10 @@ void prepareShader() {
 // 准备EBO
 void prepareEBOBuffer() {
     float positions[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f,
-         0.5f,  0.5f, 0.0f
+        0.0f, -0.5f, 0.0f,
+        0.5f,  0.0f, 0.0f,
+        0.0f,  0.5f, 0.0f,
+       -0.5f,  0.0f, 0.0f
     };
     float colors[] = {
         1.0f, 0.0f, 0.0f,
@@ -60,7 +62,7 @@ void prepareEBOBuffer() {
     // 顶点索引顺序数据, 方便复用顶点
     unsigned int indices[] = {
         0, 1, 2,
-        2, 1, 3
+        0, 3, 2
     };
 
     GLuint position, color, EBO;
@@ -111,10 +113,12 @@ void render() {
     glBindVertexArray(VAO);
 
     // 每一帧将程序运行时间传递给GPU. glfwGetTime()返回时间的单位是秒(double)
-    glUniform1f(timeLocation, glfwGetTime());
+    // 想加快动画的速率可以直接乘以一个系数
+    glUniform1f(timeLocation, glfwGetTime() * 3);
     std::cout << "time: " << glfwGetTime() << std::endl;
 
     // glDrawArrays(GL_TRIANGLES, 0, 6);
+    // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     shader->end();
@@ -151,7 +155,6 @@ int main() {
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
     while (APP->update()) {
-
         // 渲染操作
         render();
     }
