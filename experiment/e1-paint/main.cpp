@@ -5,7 +5,8 @@
 #include <random>
 #include <cmath>
 
-#include "application/Application.h"
+#include "Application/Application.h"
+#include "ShaderConfig/shader.h"
 
 struct Vertex {
     float x, y;
@@ -22,6 +23,7 @@ bool fillPolygons = true;                   // 是否填充多边形
 std::random_device rd;                      // 随机数生成器
 std::mt19937 gen(rd());
 std::uniform_real_distribution<float> dis(0.2f, 0.9f); // 生成0.2-0.9之间的随机颜色，避免太暗或太亮
+GLint colorLoc;  // 着色器中颜色变量的地址(画笔颜色)
 
 // 拖拽相关变量
 bool isDragging = false;                    // 是否正在拖拽顶点
@@ -36,23 +38,8 @@ int selectedPolygonIndex = -1;              // 当前选中的多边形
 Vertex dragStartPos;                        // 拖拽/缩放起始位置
 Vertex polygonCentroid;                     // 多边形中心点
 
-// 着色器源码
-const char* vertexShaderSource = R"(
-    #version 460 core
-    layout (location = 0) in vec2 aPos;
-    void main() {
-        gl_Position = vec4(aPos, 0.0, 1.0);
-    }
-)";
-
-const char* fragmentShaderSource = R"(
-    #version 460 core
-    out vec4 FragColor;
-    uniform vec3 uColor;
-    void main() {
-        FragColor = vec4(uColor, 1.0);
-    }
-)";
+// 着色器程序对象
+Shader* shader = nullptr;
 
 // 随机生成一种颜色
 void generateRandomColor(float* color) {
@@ -188,51 +175,12 @@ bool findNearestVertex(Vertex clickPos, int& polygonIndex, int& vertexIndex) {
 }
 
 // 初始化着色器
-unsigned int createShaderProgram() {
-    // 顶点着色器
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    // 检查编译错误
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 片段着色器
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // 检查编译错误
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 着色器程序
-    unsigned int program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-
-    // 检查链接错误
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(program, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
-    // 清理
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    return program;
+void createShaderProgram() {
+    shader = new Shader(
+        "assets/shader/vertex.glsl",
+        "assets/shader/fragment.glsl"
+        );
+    colorLoc = glGetUniformLocation(shader->getProgram(), "uColor");
 }
 
 // 坐标转换：屏幕坐标 -> 标准化设备坐标(NDC比例坐标)
@@ -479,8 +427,7 @@ int main() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // 创建着色器程序
-    unsigned int shaderProgram = createShaderProgram();
-    int colorLoc = glGetUniformLocation(shaderProgram, "uColor");
+    createShaderProgram();
 
     // 设置顶点缓冲
     unsigned int VBO, VAO;
@@ -489,7 +436,7 @@ int main() {
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
     glEnableVertexAttribArray(0);
 
     // 输出用户说明
@@ -509,14 +456,14 @@ int main() {
     while (APP->update()) {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        shader->begin();
         glBindVertexArray(VAO);
 
         // 绘制已完成的多个多边形
         for (size_t i = 0; i < polygons.size(); i++) {
             if (polygons[i].size() < 3) continue;
 
-            // 设置当前多边形的颜色
+            // 设置当前多边形的颜色(设置画笔颜色)
             if (i * 3 + 2 < polygonColors.size()) {
                 glUniform3f(colorLoc, polygonColors[i*3], polygonColors[i*3+1], polygonColors[i*3+2]);
             } else {
@@ -600,7 +547,7 @@ int main() {
             }
         }
 
-        // 绘制当前多边形
+        // 绘制当前多边形(鼠标正在画的)
         if (!currentPolygon.empty()) {
             // 设置线段颜色为白色
             glUniform3f(colorLoc, lineColor[0], lineColor[1], lineColor[2]);
@@ -629,12 +576,13 @@ int main() {
             }
         }
 
+        shader->end();
     }
 
     // 清理资源
     // glDeleteVertexArrays(1, &VAO);
     // glDeleteBuffers(1, &VBO);
-    // glDeleteProgram(shaderProgram);
+    // glDeleteProgram(shader);
     APP->destroy();
     return 0;
 }

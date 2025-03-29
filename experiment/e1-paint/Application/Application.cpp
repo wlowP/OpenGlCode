@@ -68,7 +68,7 @@ bool Application::init(const int& width, const int& height, const char* title) {
     glEnable(GL_POLYGON_SMOOTH);     // 启用多边形抗锯齿
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_BLEND);
+    glEnable(GL_BLEND);  // 启用混合
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // 设置线宽（对于线条抗锯齿）
