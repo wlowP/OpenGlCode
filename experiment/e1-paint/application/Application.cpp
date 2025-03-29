@@ -1,5 +1,5 @@
 //
-// Created by ROG on 2025/3/16.
+// Created by ROG on 2025/3/29.
 //
 
 #include "Application.h"
@@ -18,25 +18,22 @@ Application* Application::getInstance() {
 }
 
 bool Application::init(const int& width, const int& height, const char* title) {
-    // 1. 设置GLFW的初始环境
+    // 初始化GLFW
     if (!glfwInit()) {
-        std::cerr << "failed to initialize GLFW" << std::endl;
+        std::cerr << "GLFW初始化失败" << std::endl;
         return false;
     }
-    // 设置GLFW的版本号
-    // 主版本号
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    // 次版本号. 因为glad是4.6的,所以这里也要设置为4.6
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    // 使用核心模式(非立即渲染模式)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4); // 启用多重采样抗锯齿
 
-    // 2. 创建窗体对象
+    // 创建窗体对象
     this->width = width;
     this->height = height;
     window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (window == nullptr) {
-        std::cerr << "failed to create GLFW window" << std::endl;
+        std::cerr << "创建窗体失败" << std::endl;
         glfwTerminate();
         return false;
     }
@@ -46,7 +43,7 @@ bool Application::init(const int& width, const int& height, const char* title) {
 
     // 初始化GLAD - 使用glad加载所有当前版本的OpenGL函数指针
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "failed to initialize GLAD" << std::endl;
+        std::cout << "GLAD初始化失败" << std::endl;
         return false;
     }
 
@@ -55,11 +52,27 @@ bool Application::init(const int& width, const int& height, const char* title) {
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     // 键盘输入
     glfwSetKeyCallback(window, keyCallback);
+    // 鼠标输入
+    glfwSetMouseButtonCallback(window, mouseClickCallback);
+    // 鼠标移动
+    glfwSetCursorPosCallback(window, mouseMoveCallback);
 
     // 通过这个函数将app对象的指针附加到当前窗口, 以便在窗口相关的回调(键盘, 鼠标事件)中访问到app对象中各种自定义的数据
     glfwSetWindowUserPointer(window, this);
 
-    glViewport(0, 0, width, height); // 设置OpenGL视口
+    glViewport(0, 0, width, height); // 设置OpenGL视口尺寸
+
+    // 启用抗锯齿
+    glEnable(GL_MULTISAMPLE);        // 启用多重采样
+    glEnable(GL_LINE_SMOOTH);        // 启用线条抗锯齿
+    glEnable(GL_POLYGON_SMOOTH);     // 启用多边形抗锯齿
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // 设置线宽（对于线条抗锯齿）
+    glLineWidth(1.5f);
 
     return true;
 }
@@ -68,14 +81,19 @@ bool Application::update() {
     if (glfwWindowShouldClose(window)) {
         return false;
     }
-    // 接收并分发窗口消息(检查事件的消息队列)
-    glfwPollEvents();
 
     // 渲染操作...
 
     // 切换双缓存
     glfwSwapBuffers(window);
+    // 接收并分发窗口消息(检查事件的消息队列)
+    glfwPollEvents();
     return true;
+}
+
+void Application::close() {
+    // 关闭窗口
+    glfwSetWindowShouldClose(window, true);
 }
 
 void Application::destroy() {
@@ -92,7 +110,7 @@ void Application::framebufferSizeCallback(GLFWwindow* window, const int width, c
         std::cout << "OnResizeCallback not provided" << std::endl;
         return;
     }
-    app->onResizeCallback(width, height);
+    app->onResizeCallback(window, width, height);
 }
 
 void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -101,7 +119,25 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
         std::cout << "OnKeyboardCallback not provided" << std::endl;
         return;
     }
-    app->onKeyboardCallback(key, scancode, action, mods);
+    app->onKeyboardCallback(window, key, scancode, action, mods);
+}
+
+void Application::mouseClickCallback(GLFWwindow* window, int button, int action, int mods) {
+    Application* app = (Application*)glfwGetWindowUserPointer(window);
+    if (app->onMouseClickCallback == nullptr) {
+        std::cout << "OnMouseClickCallback not provided" << std::endl;
+        return;
+    }
+    app->onMouseClickCallback(window, button, action, mods);
+}
+
+void Application::mouseMoveCallback(GLFWwindow* window, double x, double y) {
+    Application* app = (Application*)glfwGetWindowUserPointer(window);
+    if (app->onMouseMoveCallback == nullptr) {
+        std::cout << "OnMouseMoveCallback not provided" << std::endl;
+        return;
+    }
+    app->onMouseMoveCallback(window, x, y);
 }
 
 Application::Application() = default;

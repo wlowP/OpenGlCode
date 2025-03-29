@@ -122,8 +122,6 @@ int main() {
     // 键盘输入
     APP->setOnKeyboardCallback(keyCallback);
 
-    // 设置OpenGL视口
-    GL_CALL(glViewport(0, 0, 800, 600));
     // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
@@ -137,7 +135,7 @@ int main() {
         // 执行画布清理操作(用glClearColor设置的颜色来清理(填充)画布)
         // 定义宏来封装errorCheck操作到函数调用之后
         // 设置glClear(-1)来触发错误检测
-        GL_CALL(glClear(GL_COLOR_BUFFER_BIT))
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
         // 渲染操作
     }

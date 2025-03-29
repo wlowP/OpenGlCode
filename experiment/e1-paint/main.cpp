@@ -5,6 +5,8 @@
 #include <random>
 #include <cmath>
 
+#include "application/Application.h"
+
 struct Vertex {
     float x, y;
 };
@@ -245,6 +247,14 @@ Vertex convertCoords(GLFWwindow* window, double x, double y) {
     };
 }
 
+// 窗口尺寸变化回调
+void framebufferSizeCallback(GLFWwindow* window, const int width, const int height) {
+    // 窗体变化响应
+    std::cout << "current window size: " << width << "x" << height << std::endl;
+    // 使用glad中的glViewport来动态更新视口的大小
+    glViewport(0, 0, width, height);
+}
+
 // 鼠标回调
 void mouseCallback(GLFWwindow* window, int button, int action, int mods) {
     double x, y;
@@ -353,7 +363,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         isDrawingPolygon = false;
     } else if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         // 按ESC退出
-        glfwSetWindowShouldClose(window, true);
+        APP->close();
     } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
         // 按Delete键删除选中的顶点
         if (dragPolygonIndex >= 0 && dragVertexIndex >= 0) {
@@ -452,38 +462,21 @@ std::vector<Vertex> triangulatePolygon(const std::vector<Vertex>& polygon) {
 
 int main() {
     system("chcp 65001 > nul"); // 设置控制台编码为UTF-8
+    APP->test();
 
     // 初始化GLFW
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return -1;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4); // 启用多重采样抗锯齿
-
-    // 创建窗口
-    GLFWwindow* window = glfwCreateWindow(800, 600, "多边形绘制工具 - 支持抗锯齿、拖拽和缩放", NULL, NULL);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
-
-    // 初始化GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
+    if (!APP->init(800, 600, "简单图形绘制")) {
         return -1;
     }
 
     // 设置回调
-    glfwSetMouseButtonCallback(window, mouseCallback);
-    glfwSetCursorPosCallback(window, cursorPosCallback);
-    glfwSetKeyCallback(window, keyCallback);
+    APP->setOnKeyboardCallback(keyCallback);
+    APP->setOnMouseClickCallback(mouseCallback);
+    APP->setOnMouseMoveCallback(cursorPosCallback);
+    APP->setOnResizeCallback(framebufferSizeCallback);
+
+    // 清除颜色缓冲(设置背景色并擦除画布)
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // 创建着色器程序
     unsigned int shaderProgram = createShaderProgram();
@@ -499,18 +492,6 @@ int main() {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // 启用抗锯齿
-    glEnable(GL_MULTISAMPLE);        // 启用多重采样
-    glEnable(GL_LINE_SMOOTH);        // 启用线条抗锯齿
-    glEnable(GL_POLYGON_SMOOTH);     // 启用多边形抗锯齿
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // 设置线宽（对于线条抗锯齿）
-    glLineWidth(1.5f);
-
     // 输出用户说明
     std::cout << "多边形绘制程序说明：" << std::endl;
     std::cout << "  - 左键点击添加顶点，靠近起点时自动闭合" << std::endl;
@@ -525,9 +506,7 @@ int main() {
     std::cout << "  - 按ESC键退出程序" << std::endl;
 
     // 渲染循环
-    while (!glfwWindowShouldClose(window)) {
-        // 清除颜色缓冲
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    while (APP->update()) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
@@ -650,15 +629,12 @@ int main() {
             }
         }
 
-        // 交换缓冲
-        glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // 清理资源
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
-    glfwTerminate();
+    // glDeleteVertexArrays(1, &VAO);
+    // glDeleteBuffers(1, &VBO);
+    // glDeleteProgram(shaderProgram);
+    APP->destroy();
     return 0;
 }

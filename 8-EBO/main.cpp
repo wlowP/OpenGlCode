@@ -308,8 +308,6 @@ int main() {
     // 键盘输入
     APP->setOnKeyboardCallback(keyCallback);
 
-    // 设置OpenGL视口
-    GL_CALL(glViewport(0, 0, 800, 600));
     // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
