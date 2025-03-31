@@ -58,7 +58,7 @@ public:
     }
 
     static void test() {
-        std::cout << "测试" << std::endl;
+        std::cout << "application test" << std::endl;
     }
 private:
     static Application* instance; // 全局唯一实例

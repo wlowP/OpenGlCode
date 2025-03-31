@@ -5,15 +5,18 @@
 #include <random>
 #include <cmath>
 #include <algorithm>
+#include <thread>
 
 #include "Application/Application.h"
 #include "ShaderConfig/shader.h"
+
+using namespace std;
 
 struct Vertex {
     float x, y;
 };
 
-std::ostream& operator<<(std::ostream& os, const Vertex& v) {
+ostream& operator<<(ostream& os, const Vertex& v) {
     os << "(" << v.x << ", " << v.y << ")";
     return os;
 }
@@ -23,18 +26,18 @@ Application* APP = Application::getInstance();
 Shader* shader = nullptr;
 
 // 全局变量
-std::vector<std::vector<Vertex>> polygons; // 所有已完成的多个多边形
-std::vector<float> polygonColors; // 每个多边形的颜色 (R,G,B)
-std::vector<Vertex> currentPolygon; // 当前正在绘制的多边形顶点()
+vector<vector<Vertex>> polygons; // 所有已完成的多个多边形
+vector<float> polygonColors; // 每个多边形的颜色 (R,G,B)
+vector<Vertex> currentPolygon; // 当前正在绘制的多边形顶点()
 bool isDrawingPolygon = false; // 多边形绘制状态
 Vertex tempVertex; // 当前鼠标位置（用于橡皮筋效果）
 bool isSelecting = false; // 是否正在框选
 Vertex* tempVertices = new Vertex[4]; // 框选的矩形四个顶点
 float lineColor[3] = {1.0f, 1.0f, 1.0f}; // 绘制时跟随鼠标的线段颜色
 bool fillPolygons = true; // 是否填充多边形
-std::random_device rd; // 随机数生成器
-std::mt19937 gen(rd());
-std::uniform_real_distribution dis(0.2f, 0.9f); // 生成0.2-0.9之间的随机颜色，避免太暗或太亮
+random_device rd; // 随机数生成器
+mt19937 gen(rd());
+uniform_real_distribution dis(0.2f, 0.9f); // 生成0.2-0.9之间的随机颜色，避免太暗或太亮
 GLint colorLoc; // 着色器中颜色变量的地址(画笔颜色)
 
 // 拖拽相关变量
@@ -47,9 +50,9 @@ float selectionDistance = 0.025f; // 选择顶点的距离阈值（归一化坐�
 bool isDraggingPolygon = false; // 是否正在拖拽整个多边形
 bool isScalingPolygon = false; // 是否正在缩放多边形
 int selectedPolygonIndex = -1; // 当前鼠标右键选中的多边形
-std::vector<int> selectedPolygonIndices; // 框选选中的多边形索引
+vector<int> selectedPolygonIndices; // 框选选中的多边形索引
 Vertex dragStartPos; // 拖拽/缩放起始位置
-Vertex polygonCentroid; // 多边形中心点
+Vertex polygonCentroid; // 被缩放的多边形的中心点
 
 // 随机生成一种颜色
 void generateRandomColor(float* color) {
@@ -60,26 +63,26 @@ void generateRandomColor(float* color) {
 
 // 计算点到线段的距离
 float pointToLineDistance(Vertex p, Vertex a, Vertex b) {
-    float lineLength = std::sqrt(std::pow(b.x - a.x, 2) + std::pow(b.y - a.y, 2));
+    float lineLength = sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
     // 如果AB线段太短，直接返回点P到点A的距离
-    if (lineLength < 0.00001f) return std::sqrt(std::pow(p.x - a.x, 2) + std::pow(p.y - a.y, 2));
+    if (lineLength < 0.00001f) return sqrt(pow(p.x - a.x, 2) + pow(p.y - a.y, 2));
 
     // 计算点p到线段ab的投影点(记为C)的系数(AP向量点乘AB向量之后除以AB的长度平方, 其绝对值等于AC与AB的长度比值)
     float t = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / (lineLength * lineLength);
 
     // 限制t在[0,1]范围内，确保投影点在线段上
-    t = std::max(0.0f, std::min(1.0f, t));
+    t = max(0.0f, min(1.0f, t));
 
     // 计算投影点坐标
     float projX = a.x + t * (b.x - a.x);
     float projY = a.y + t * (b.y - a.y);
 
     // 计算点p到投影点的距离
-    return std::sqrt(std::pow(p.x - projX, 2) + std::pow(p.y - projY, 2));
+    return sqrt(pow(p.x - projX, 2) + pow(p.y - projY, 2));
 }
 
 // 计算多边形中心点
-Vertex calculateCentroid(const std::vector<Vertex>& polygon) {
+Vertex calculateCentroid(const vector<Vertex>& polygon) {
     Vertex centroid = {0.0f, 0.0f};
     if (polygon.empty()) return centroid;
 
@@ -96,7 +99,7 @@ Vertex calculateCentroid(const std::vector<Vertex>& polygon) {
 }
 
 // 检测点是否在多边形内部（射线法）
-bool isPointInPolygon(Vertex point, const std::vector<Vertex>& polygon) {
+bool isPointInPolygon(Vertex point, const vector<Vertex>& polygon) {
     // 不考虑线段
     if (polygon.size() < 3) return false;
 
@@ -139,8 +142,8 @@ bool findNearestVertex(Vertex clickPos, int& polygonIndex, int& vertexIndex) {
     // 遍历所有多边形的所有顶点, 如果其到鼠标点击位置的距离小于阈值(minDist = selectionDistance), 则认为选中
     for (size_t i = 0; i < polygons.size(); i++) {
         for (size_t j = 0; j < polygons[i].size(); j++) {
-            float dist = std::sqrt(std::pow(clickPos.x - polygons[i][j].x, 2) +
-                std::pow(clickPos.y - polygons[i][j].y, 2));
+            float dist = sqrt(pow(clickPos.x - polygons[i][j].x, 2) +
+                pow(clickPos.y - polygons[i][j].y, 2));
             if (dist < minDist) {
                 minDist = dist;
                 // 记录选中(正在拖拽)的多边形和顶点索引
@@ -164,10 +167,10 @@ bool findNearestVertex(Vertex clickPos, int& polygonIndex, int& vertexIndex) {
                     Vertex b = polygons[i][nextIdx];
 
                     // 计算投影点, 原理同#pointToLineDistance, 可以抽取为独立函数
-                    float lineLength = std::sqrt(std::pow(b.x - a.x, 2) + std::pow(b.y - a.y, 2));
+                    float lineLength = sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
                     float t = ((clickPos.x - a.x) * (b.x - a.x) + (clickPos.y - a.y) * (b.y - a.y)) /
                         (lineLength * lineLength);
-                    t = std::max(0.0f, std::min(1.0f, t));
+                    t = max(0.0f, min(1.0f, t));
 
                     // 在多边形的第j条边插入新顶点, 即为投影点
                     Vertex newVertex = {a.x + t * (b.x - a.x), a.y + t * (b.y - a.y)};
@@ -187,8 +190,8 @@ bool findNearestVertex(Vertex clickPos, int& polygonIndex, int& vertexIndex) {
 
 // 判断点p是否在由a, b确定的矩形内
 bool isInRectangle(const Vertex& p, const Vertex& a, const Vertex& b) {
-    return p.x >= std::min(a.x, b.x) && p.x <= std::max(a.x, b.x) &&
-        p.y >= std::min(a.y, b.y) && p.y <= std::max(a.y, b.y);
+    return p.x >= min(a.x, b.x) && p.x <= max(a.x, b.x) &&
+        p.y >= min(a.y, b.y) && p.y <= max(a.y, b.y);
 }
 
 // 初始化着色器
@@ -214,7 +217,7 @@ Vertex convertCoords(GLFWwindow* window, double x, double y) {
 // 窗口尺寸变化回调
 void framebufferSizeCallback(GLFWwindow* window, const int width, const int height) {
     // 窗体变化响应
-    std::cout << "current window size: " << width << "x" << height << std::endl;
+    cout << "current window size: " << width << "x" << height << endl;
     // 使用glad中的glViewport来动态更新视口的大小
     glViewport(0, 0, width, height);
 }
@@ -365,14 +368,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     }
 }
 
-void printVector(const std::vector<int>& vec) {
-    std::cout << "selected polygons: ";
-    for (const auto& item : vec) {
-        std::cout << item << " ";
-    }
-    std::cout << std::endl;
-}
-
 // 鼠标移动回调
 void cursorPosCallback(GLFWwindow* window, double x, double y) {
     Vertex mousePos = convertCoords(window, x, y);
@@ -394,7 +389,7 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
                     isInside = true;
                     // 如果多边形的顶点在框选矩形内, 则将其索引添加到selectedPolygonIndices中
                     // 如果不存在, 才添加
-                    if (std::ranges::find(selectedPolygonIndices, i) == selectedPolygonIndices.end()) {
+                    if (ranges::find(selectedPolygonIndices, i) == selectedPolygonIndices.end()) {
                         selectedPolygonIndices.push_back(i);
                     }
                     break;
@@ -402,7 +397,7 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
             }
             // 所有顶点都没被框选到, 则查找并删除selectedPolygonIndices中的该多边形索引
             if (!isInside && !selectedPolygonIndices.empty()) {
-                auto it = std::ranges::remove(selectedPolygonIndices, i).begin();
+                auto it = ranges::remove(selectedPolygonIndices, i).begin();
                 selectedPolygonIndices.erase(it, selectedPolygonIndices.end());
             }
         }
@@ -419,7 +414,7 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
         const float dy = mousePos.y - dragStartPos.y;
 
         // 如果当前选中的多边形包含在框选的多边形集合中, 则所有选中的多边形同时移动
-        if (std::ranges::find(selectedPolygonIndices, selectedPolygonIndex) != selectedPolygonIndices.end()) {
+        if (ranges::find(selectedPolygonIndices, selectedPolygonIndex) != selectedPolygonIndices.end()) {
             // 更新多边形所有顶点位置
             for (int index : selectedPolygonIndices) {
                 for (auto& vertex : polygons[index]) {
@@ -443,10 +438,10 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
     // 缩放多边形: 更新多边形所有顶点位置
     else if (isScalingPolygon && selectedPolygonIndex >= 0) {
         // 计算初始距离(拖拽起点到中心)与当前距离(鼠标位置到中心)
-        float initialDist = std::sqrt(std::pow(dragStartPos.x - polygonCentroid.x, 2) +
-            std::pow(dragStartPos.y - polygonCentroid.y, 2));
-        float currentDist = std::sqrt(std::pow(mousePos.x - polygonCentroid.x, 2) +
-            std::pow(mousePos.y - polygonCentroid.y, 2));
+        float initialDist = sqrt(pow(dragStartPos.x - polygonCentroid.x, 2) +
+            pow(dragStartPos.y - polygonCentroid.y, 2));
+        float currentDist = sqrt(pow(mousePos.x - polygonCentroid.x, 2) +
+            pow(mousePos.y - polygonCentroid.y, 2));
 
         if (initialDist > 0.0001f) {
             // 避免除以零
@@ -471,8 +466,8 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
 }
 
 // 简单的三角形分割算法（扇形三角化）
-std::vector<Vertex> triangulatePolygon(const std::vector<Vertex>& polygon) {
-    std::vector<Vertex> triangles;
+vector<Vertex> triangulatePolygon(const vector<Vertex>& polygon) {
+    vector<Vertex> triangles;
     if (polygon.size() < 3) return triangles;
 
     // 使用扇形三角化 - 适用于简单凸多边形
@@ -487,8 +482,28 @@ std::vector<Vertex> triangulatePolygon(const std::vector<Vertex>& polygon) {
     return triangles;
 }
 
+// 命令行输入线程
+void command() {
+    string s;
+    while (true) {
+        cin >> s;
+        if (s == "/clear") {
+            polygons.clear();
+            polygonColors.clear();
+            currentPolygon.clear();
+            isDrawingPolygon = false;
+            cout << "all polygons cleared" << endl;
+        } else if (s == "/exit") {
+            APP->close();
+            cout << "shutting down..." << endl;
+            break;
+        } else {
+            cout << "unknown command: " << s << endl;
+        }
+    }
+}
+
 int main() {
-    system("chcp 65001 > nul"); // 设置控制台编码为UTF-8
     // APP->test();
 
     // 初始化GLFW
@@ -520,18 +535,8 @@ int main() {
 
     glBindVertexArray(VAO);
 
-    // 输出用户说明
-    std::cout << "多边形绘制程序说明：" << std::endl;
-    std::cout << "  - 左键点击添加顶点，靠近起点时自动闭合" << std::endl;
-    std::cout << "  - 左键点击并拖拽可以移动顶点" << std::endl;
-    std::cout << "  - 左键点击线段可以在线段上添加新顶点并拖拽" << std::endl;
-    std::cout << "  - 右键点击强制完成当前多边形" << std::endl;
-    std::cout << "  - 右键点击多边形并拖动可移动整个多边形" << std::endl;
-    std::cout << "  - 按住Shift键+右键拖动可缩放多边形" << std::endl;
-    std::cout << "  - 按F键切换填充/线框模式" << std::endl;
-    std::cout << "  - 按Delete键删除选中的顶点或多边形" << std::endl;
-    std::cout << "  - 按C键清除所有多边形" << std::endl;
-    std::cout << "  - 按ESC键退出程序" << std::endl;
+    thread t1(command);
+    t1.detach();
 
     // 渲染循环
     while (APP->update()) {
@@ -540,6 +545,7 @@ int main() {
         shader->begin();
 
         // 绘制已完成的多个多边形
+        // 因为实验本身要求实现画板功能, 所以代码看上去跟立即渲染模式差不多
         for (size_t i = 0; i < polygons.size(); i++) {
             if (polygons[i].size() < 3) continue;
 
@@ -553,17 +559,17 @@ int main() {
             }
 
             // 对于当前(鼠标右键)选中或者被框选到的多边形，颜色略微增亮
-            if (std::ranges::find(selectedPolygonIndices, i) != selectedPolygonIndices.end() || static_cast<int>(i) ==
+            if (ranges::find(selectedPolygonIndices, i) != selectedPolygonIndices.end() || static_cast<int>(i) ==
                 selectedPolygonIndex) {
                 glUniform4f(colorLoc,
-                            std::min(polygonColors[i * 3] * 1.3f, 1.0f),
-                            std::min(polygonColors[i * 3 + 1] * 1.3f, 1.0f),
-                            std::min(polygonColors[i * 3 + 2] * 1.3f, 1.0f), 1.0f);
+                            min(polygonColors[i * 3] * 1.3f, 1.0f),
+                            min(polygonColors[i * 3 + 1] * 1.3f, 1.0f),
+                            min(polygonColors[i * 3 + 2] * 1.3f, 1.0f), 1.0f);
             }
 
             if (fillPolygons) {
                 // 填充多边形 - 使用三角形分割
-                std::vector<Vertex> triangles = triangulatePolygon(polygons[i]);
+                vector<Vertex> triangles = triangulatePolygon(polygons[i]);
                 if (!triangles.empty()) {
                     glBufferData(GL_ARRAY_BUFFER, triangles.size() * sizeof(Vertex),
                                  triangles.data(), GL_DYNAMIC_DRAW);
@@ -572,7 +578,7 @@ int main() {
 
                 // 绘制边框 GL_LINE_LOOP
                 // 如果是选中的多边形, 绘制橙色边框, 否则绘制白色边框
-                if (std::ranges::find(selectedPolygonIndices, i) != selectedPolygonIndices.end() || static_cast<int>(i)
+                if (ranges::find(selectedPolygonIndices, i) != selectedPolygonIndices.end() || static_cast<int>(i)
                     == selectedPolygonIndex) {
                     glUniform4f(colorLoc, 1.0f, 0.45f, 0.0f, 1.0f);
                 } else {

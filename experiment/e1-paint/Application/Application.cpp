@@ -20,7 +20,7 @@ Application* Application::getInstance() {
 bool Application::init(const int& width, const int& height, const char* title) {
     // 初始化GLFW
     if (!glfwInit()) {
-        std::cerr << "GLFW初始化失败" << std::endl;
+        std::cerr << "failed to initialize GLFW" << std::endl;
         return false;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -33,7 +33,7 @@ bool Application::init(const int& width, const int& height, const char* title) {
     this->height = height;
     window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (window == nullptr) {
-        std::cerr << "创建窗体失败" << std::endl;
+        std::cerr << "failed to create window" << std::endl;
         glfwTerminate();
         return false;
     }
@@ -43,7 +43,7 @@ bool Application::init(const int& width, const int& height, const char* title) {
 
     // 初始化GLAD - 使用glad加载所有当前版本的OpenGL函数指针
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "GLAD初始化失败" << std::endl;
+        std::cout << "failed to initialize GLAD" << std::endl;
         return false;
     }
 
