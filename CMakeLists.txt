@@ -16,7 +16,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # 加载源文件
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 
-# 设置静态链接, 以免直接运行exe时提示找不到libgcc等动态链接库
+# 设置静态链接, 省得直接运行exe时提示找不到libgcc等动态链接库
 set(CMAKE_EXE_LINKER_FLAGS -static)
 
 # =======================================================

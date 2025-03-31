@@ -82,8 +82,6 @@ bool Application::update() {
         return false;
     }
 
-    // 渲染操作...
-
     // 切换双缓存
     glfwSwapBuffers(window);
     // 接收并分发窗口消息(检查事件的消息队列)

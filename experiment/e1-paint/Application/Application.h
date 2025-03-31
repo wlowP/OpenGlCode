@@ -19,9 +19,6 @@ using OnMouseMoveCallback = void(*)(GLFWwindow*, double, double);
 // 鼠标点击回调
 using OnMouseClickCallback = void(*)(GLFWwindow*, int, int, int);
 
-// 定义一个宏方便访问单例
-#define APP Application::getInstance()
-
 /*
  * Application存储应用状态等数据
  */

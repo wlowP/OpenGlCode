@@ -34,7 +34,7 @@ Shader::Shader(const char* vsSrcPath, const char* fsSrcPath) {
         vsSrc = vsStream.str();
         fsSrc = fsStream.str();
     } catch (std::ifstream::failure& e) {
-        std::cerr << "错误: 着色器文件错误" << e.what() << std::endl;
+        std::cerr << "ERROR::SHADER: Shader File Error: " << e.what() << std::endl;
     }
 
     const char* vertexShaderSource = vsSrc.c_str();
@@ -89,15 +89,15 @@ void Shader::checkShaderError(GLuint target, const std::string& type) {
         glGetShaderiv(target, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(target, sizeof(infoLog), nullptr, infoLog);
-            std::cerr << "错误:着色器:" << type << "::编译失败\n" << infoLog << std::endl;
+            std::cerr << "ERROR::SHADER::" << type << "::COMPILATION_FAILED\n" << infoLog << std::endl;
         }
     } else if (type == "LINK") {
         glGetProgramiv(target, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(target, sizeof(infoLog), nullptr, infoLog);
-            std::cerr << "错误:着色器:" << type << "::链接失败\n" << infoLog << std::endl;
+            std::cerr << "ERROR::SHADER::" << type << "::LINKING_FAILED\n" << infoLog << std::endl;
         }
     } else {
-        std::cerr << "错误:着色器:" << type << "::未知错误\n";
+        std::cerr << "ERROR::SHADER::" << type << "::UNKNOWN_ERROR\n";
     }
 }
