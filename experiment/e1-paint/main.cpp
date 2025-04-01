@@ -6,6 +6,8 @@
 #include <cmath>
 #include <algorithm>
 #include <thread>
+#include <fstream>
+#include <filesystem>
 
 #include "Application/Application.h"
 #include "ShaderConfig/shader.h"
@@ -53,6 +55,9 @@ int selectedPolygonIndex = -1; // 当前鼠标右键选中的多边形
 vector<int> selectedPolygonIndices; // 框选选中的多边形索引
 Vertex dragStartPos; // 拖拽/缩放起始位置
 Vertex polygonCentroid; // 被缩放的多边形的中心点
+
+// 存取文件的路径前缀
+const string filePrefix = "data/";
 
 // 随机生成一种颜色
 void generateRandomColor(float* color) {
@@ -484,21 +489,125 @@ vector<Vertex> triangulatePolygon(const vector<Vertex>& polygon) {
 
 // 命令行输入线程
 void command() {
-    string s;
+    string cmd;
     while (true) {
-        cin >> s;
-        if (s == "/clear") {
+        cin >> cmd;
+        if (cmd == "/clear") {
             polygons.clear();
             polygonColors.clear();
             currentPolygon.clear();
             isDrawingPolygon = false;
             cout << "all polygons cleared" << endl;
-        } else if (s == "/exit") {
+        } else if (cmd == "/status") {
+            cout << "polygons: " << endl;
+            for (size_t i = 0; i < polygons.size(); i++) {
+                cout << "polygon " << i << ": ";
+                for (const auto& vertex : polygons[i]) {
+                    cout << vertex << " ";
+                }
+                cout << endl;
+            }
+            cout << "polygons count: " << polygons.size() << endl;
+            cout << "current polygon: ";
+            for (const auto& vertex : currentPolygon) {
+                cout << vertex << " ";
+            }
+            cout << endl;
+            cout << "selected polygon index: " << selectedPolygonIndex << endl;
+            cout << "selected polygon indices: ";
+            for (const auto& index : selectedPolygonIndices) {
+                cout << index << " ";
+            }
+            cout << endl;
+        } else if (cmd == "/save") {
+            // 保存多边形数据到文件
+            cout << "save: enter file name: " << endl;
+            string filename;
+            cin >> filename;
+            // 检查文件名是否为空
+            if (filename.empty()) {
+                cout << "ERROR: filename cannot be empty" << endl;
+                continue;
+            }
+            filename += ".dat";
+            cout << "saving to " << filename << "..." << endl;
+            ofstream ofs(filePrefix + filename);
+            if (ofs.is_open()) {
+                // 保存顶点数据
+                ofs << polygons.size() << endl;
+                for (auto & polygon : polygons) {
+                    ofs << polygon.size() << endl;
+                    for (const auto& vertex : polygon) {
+                        ofs << vertex.x << " " << vertex.y << " ";
+                    }
+                    ofs << endl;
+                }
+                ofs.flush();
+                // 保存颜色数据. 这里的颜色是跟随多边形的, 不是顶点颜色
+                ofs << polygonColors.size() / 3 << endl;
+                for (size_t i = 0; i < polygonColors.size(); i += 3) {
+                    ofs << polygonColors[i] << " " << polygonColors[i + 1] << " "
+                        << polygonColors[i + 2] << endl;
+                }
+                ofs.close();
+                cout << "saved to " << filename << endl;
+            } else {
+                cerr << "ERROR: failed to save file " << filename << endl;
+            }
+        } else if (cmd == "/load") {
+            // 从文件加载多边形数据
+            cout << "load: enter file name: " << endl;
+            string filename;
+            cin >> filename;
+            // 检查文件名是否为空
+            if (filename.empty()) {
+                cout << "ERROR: filename cannot be empty" << endl;
+                continue;
+            }
+            filename += ".dat";
+            cout << "loading from " << filename << "..." << endl;
+            ifstream ifs(filePrefix + filename);
+            if (ifs.is_open()) {
+                // 清除当前多边形数据
+                polygons.clear();
+                polygonColors.clear();
+                currentPolygon.clear();
+                isDrawingPolygon = false;
+
+                // 读取顶点数据
+                size_t polygonCount;
+                ifs >> polygonCount;
+                for (size_t i = 0; i < polygonCount; i++) {
+                    size_t vertexCount;
+                    ifs >> vertexCount;
+                    vector<Vertex> polygon(vertexCount);
+                    for (size_t j = 0; j < vertexCount; j++) {
+                        ifs >> polygon[j].x >> polygon[j].y;
+                    }
+                    polygons.push_back(polygon);
+                }
+
+                // 读取颜色数据
+                size_t colorCount;
+                ifs >> colorCount;
+                for (size_t i = 0; i < colorCount; i++) {
+                    float r, g, b;
+                    ifs >> r >> g >> b;
+                    polygonColors.push_back(r);
+                    polygonColors.push_back(g);
+                    polygonColors.push_back(b);
+                }
+                ifs.close();
+                cout << "loaded from " << filename << endl;
+            } else {
+                cerr << "ERROR: failed to load file " << filename << endl;
+            }
+        } else if (cmd == "/exit") {
             APP->close();
             cout << "shutting down..." << endl;
             break;
         } else {
-            cout << "unknown command: " << s << endl;
+            cout << "unknown command: " << cmd << endl;
         }
     }
 }
@@ -534,6 +643,11 @@ int main() {
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(VAO);
+
+    // 确保data目录存在
+    if (!filesystem::exists(filePrefix)) {
+        filesystem::create_directories(filePrefix);  // 递归创建所有缺失的目录
+    }
 
     thread t1(command);
     t1.detach();
