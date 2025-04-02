@@ -264,22 +264,20 @@ void mouseCallback(GLFWwindow* window, int button, int action, int mods) {
             else if (findNearestVertex(mousePos, dragPolygonIndex, dragVertexIndex)) {
                 isDragging = true;
             }
-            // 如果没有选中任何顶点或线段, 开始进行框选(shift)或者绘制新多边形
-            else {
-                if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+            // 如果没有选中任何顶点或线段, 开始进行框选(按住shift)或者绘制新多边形
+            else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
                     glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-                    isSelecting = true;
-                    tempVertices[0] = mousePos;
-                    tempVertices[1] = mousePos;
-                    tempVertices[2] = mousePos;
-                    tempVertices[3] = mousePos;
-                } else {
-                    // 绘制新多边形
-                    currentPolygon.clear();
-                    currentPolygon.push_back(mousePos);
-                    isDrawingPolygon = true;
-                    tempVertex = mousePos;
-                }
+                isSelecting = true;
+                tempVertices[0] = mousePos;
+                tempVertices[1] = mousePos;
+                tempVertices[2] = mousePos;
+                tempVertices[3] = mousePos;
+            } else {
+                // 绘制新多边形
+                currentPolygon.clear();
+                currentPolygon.push_back(mousePos);
+                isDrawingPolygon = true;
+                tempVertex = mousePos;
             }
         } else if (action == GLFW_RELEASE) {
             // 释放鼠标，结束拖拽
@@ -353,6 +351,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         APP->close();
     } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
         // 按Delete键删除选中的顶点
+        // 删除拖拽的顶点
         if (dragPolygonIndex >= 0 && dragVertexIndex >= 0) {
             // 确保删除顶点后多边形至少有3个顶点
             if (polygons[dragPolygonIndex].size() > 3) {
@@ -360,7 +359,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
                 dragVertexIndex = -1;
             }
         }
-        // 删除选中的多边形
+        // 删除选中的多边形(要鼠标右键一直按着)
         else if (selectedPolygonIndex >= 0) {
             polygons.erase(polygons.begin() + selectedPolygonIndex);
             // 同时删除对应的颜色信息
@@ -369,6 +368,18 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
                                     polygonColors.begin() + selectedPolygonIndex * 3 + 3);
             }
             selectedPolygonIndex = -1;
+        }
+        // 删除框选的多个多边形
+        else if (!selectedPolygonIndices.empty()) {
+            // 删除选中的多边形
+            for (int index : selectedPolygonIndices) {
+                polygons.erase(polygons.begin() + index);
+                if (index * 3 < polygonColors.size()) {
+                    polygonColors.erase(polygonColors.begin() + index * 3,
+                                        polygonColors.begin() + index * 3 + 3);
+                }
+            }
+            selectedPolygonIndices.clear();
         }
     }
 }
@@ -616,7 +627,7 @@ int main() {
     // APP->test();
 
     // 初始化GLFW
-    if (!APP->init(800, 600, "简单图形绘制")) {
+    if (!APP->init(1000, 750, "简单图形绘制")) {
         return -1;
     }
 
@@ -649,6 +660,7 @@ int main() {
         filesystem::create_directories(filePrefix);  // 递归创建所有缺失的目录
     }
 
+    // 创建命令行输入线程
     thread t1(command);
     t1.detach();
 
