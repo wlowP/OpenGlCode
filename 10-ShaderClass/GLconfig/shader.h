@@ -17,11 +17,16 @@ public:
     Shader(const char* vsSrcPath, const char* fsSrcPath); // 构造函数
     ~Shader();
 
-    void begin(); // 开始使用当前的着色器
+    void begin() const; // 开始使用当前的着色器
 
-    void end(); // 结束使用当前的着色器
+    static void end(); // 结束使用当前的着色器
 
     GLuint getProgram() const { return program; } // 获取当前的program
+
+    // 设置uniform变量(注意着色器中得先有uniform定义)
+    void setVec3(const std::string& name, float v0, float v1, float v2) const;
+    void setVec3(const std::string& name, const float* values) const;
+    void setInt(const std::string& name, int value) const;
 private:
     // 对于shader程序, 检查编译错误; 对于program, 检查链接错误
     void checkShaderError(GLuint target, const std::string& type);

@@ -74,12 +74,22 @@ Shader::Shader(const char* vsSrcPath, const char* fsSrcPath) {
 
 Shader::~Shader() {}
 
-void Shader::begin() {
+void Shader::begin() const {
     GL_CALL(glUseProgram(program));
 }
 
 void Shader::end() {
     GL_CALL(glUseProgram(0));
+}
+
+void Shader::setVec3(const std::string& name, float v0, float v1, float v2) const {
+    glUniform3f(glGetUniformLocation(program, name.c_str()), v0, v1, v2);
+}
+void Shader::setVec3(const std::string& name, const float* values) const {
+    glUniform3fv(glGetUniformLocation(program, name.c_str()), 1, values);
+}
+void Shader::setInt(const std::string& name, int value) const {
+    glUniform1i(glGetUniformLocation(program, name.c_str()), value);
 }
 
 void Shader::checkShaderError(GLuint target, const std::string& type) {
