@@ -1,9 +1,5 @@
 #include <iostream>
 
-// stb_image要求定义宏STB_IMAGE_IMPLEMENTATION才能用
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include "core.h"
 
 // 这里引用的是2-glad中的error_check.h, 在CMakeLists.txt中设置了include路径
@@ -11,12 +7,13 @@
 // 3-Application中的Application.h
 #include "Application.h"
 #include "shader.h"
+#include "GLconfig/Texture.h"
 
 GLuint VAO;
-// 纹理对象
-GLuint texture;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
+// 纹理对象
+Texture* texture = nullptr;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -39,37 +36,33 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
 // 定义和编译着色器
 void prepareShader() {
     shader = new Shader(
-        "assets/shader/translate/vertex.glsl",
-        "assets/shader/translate/fragment.glsl"
+        "assets/shader/default/vertex.glsl",
+        "assets/shader/default/fragment.glsl"
         );
 }
 
 // 准备包含uv坐标的缓冲区
 void prepareEBOBuffer() {
     float positions[] = {
-        -0.5f, -0.5f, 0.0f, // 左下
-         0.5f, -0.5f, 0.0f, // 右下
-         0.5f,  0.5f, 0.0f, // 右上
-        -0.5f,  0.5f, 0.0f, // 左上
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f,
     };
     float colors[] = {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f, 0.0f,
     };
     // 纹理坐标数据
     float uvs[] = {
         0.0f, 0.0f,
-        2.0f, 0.0f,
-        2.0f, 2.0f,
-        0.0f, 2.0f,
+        1.0f, 0.0f,
+        0.5f, 1.0f,
     };
 
     // 顶点索引顺序数据, 方便复用顶点
     unsigned int indices[] = {
         0, 1, 2,
-        0, 2, 3,
     };
 
     GLuint position, color, EBO, uv;
@@ -117,38 +110,8 @@ void prepareEBOBuffer() {
 
 // 纹理加载
 void prepareTexture() {
-    // 1. stbImage 读取图片文件
-    int width, height, channels;
-    // 反转Y轴(因为OpenGL纹理的坐标系是左下角为原点, 而图片文件的坐标系是左上角为原点)
-    stbi_set_flip_vertically_on_load(true);
-    // 读取图片文件, 并且全部转换为RGBA格式
-    unsigned char* data = stbi_load("assets/texture/reisen.jpg", &width, &height, &channels, STBI_rgb_alpha);
-
-    // 2. 创建并绑定纹理对象
-    glGenTextures(1, &texture);
-    // 激活纹理单元0 (虽然默认情况下也会激活0) (默认一共有0-15, 共16个纹理单元)
-    // GL_TEXTURE0宏本身的值虽然不是0, 但是跟GL_TEXTURE1, 2..都是连续的, 于是可以GL_TEXTURE0 + 1来表示1号纹理单元
-    glActiveTexture(GL_TEXTURE0);
-    // 绑定纹理对象 (到gl状态机的GL_TEXTURE_2D插槽)
-    // 📌📌同时还会将纹理对象自动绑定到当前激活的纹理单元上
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // 3. 传输纹理数据到GPU (会开辟GPU内存)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    // 📌别忘了释放图片数据(已经传输到GPU, 内存中就不需要了)
-    stbi_image_free(data);
-
-    // 4. 设置纹理参数
-    // 纹理过滤方式. 图片被放大时采用插值, 缩小时就不插值(取临近点像素)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // 纹理环绕方式
-    // 纹理坐标超出范围时, 采用重复的方式(也是默认方式)
-    // 于是将顶点的uv坐标设置为超出[0-1]范围的值, 就会出现平铺效果
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    texture = new Texture("assets/texture/reisen.jpg", 0);
+    texture->bindTexture();
 }
 
 // 执行渲染操作
@@ -167,22 +130,19 @@ void render() {
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
 
-    shader->setFloat("uTime", glfwGetTime());
-
     // glDrawArrays(GL_TRIANGLES, 0, 6);
     // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 
     Shader::end();
 }
 
 /*
- * 纹理平铺重复, 并且持续平移
- * -> 都是修改uv坐标即可(纹理平铺重复要设置环绕方式参数)
+ * 纹理相关API封装为类
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "纹理贴图平铺重复")) {
+    if (!APP->init(800, 600, "纹理相关API封装为类")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -212,5 +172,7 @@ int main() {
 
     // 4. 清理和关闭
     APP->destroy();
+
+    delete texture;
     return 0;
 }

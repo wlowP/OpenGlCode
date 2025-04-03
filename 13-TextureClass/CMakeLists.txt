@@ -9,22 +9,30 @@ add_definitions(-DDEBUG)
 #add_subdirectory(application)
 #add_subdirectory(glConfig)
 include_directories(
+        # 检查错误的宏定义
         ${PROJECT_SOURCE_DIR}/2-glad/exception
+        # 应用程序头文件, 包含窗体对象, 尺寸等
         ${PROJECT_SOURCE_DIR}/3-Application/application
+        # 着色器类头文件, 包含着色器对象, 着色器编译等
         ${PROJECT_SOURCE_DIR}/10-ShaderClass/glConfig
 )
+# 纹理类头文件, 包含纹理对象, 纹理加载等
+add_subdirectory(GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
-add_executable(12-Texture ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
-add_executable(12-1-Repeat ${PROJECT_SOURCE_DIR}/glad/glad.c repeat.cpp)
+add_executable(13-TextureClass ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
 
-
-target_link_libraries(12-Texture ${PROJECT_SOURCE_DIR}/lib/libglfw3.a errorCheck application glConfig)
-target_link_libraries(12-1-Repeat ${PROJECT_SOURCE_DIR}/lib/libglfw3.a errorCheck application glConfig)
+target_link_libraries(13-TextureClass
+        ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
+        errorCheck
+        application
+        glConfig
+        glConfig-texture
+)
 
 # ======资源文件拷贝======
 # 着色器源代码
-file(GLOB ASSETS ./assets)
+file(GLOB ASSETS ${PROJECT_SOURCE_DIR}/12-Texture/assets)
 # 纹理贴图
 file(GLOB ASSETS ${ASSETS} ${PROJECT_SOURCE_DIR}/assets)
-file(COPY ${ASSETS} DESTINATION ${CMAKE_BINARY_DIR}/12-Texture)
+file(COPY ${ASSETS} DESTINATION ${CMAKE_BINARY_DIR}/13-TextureClass)

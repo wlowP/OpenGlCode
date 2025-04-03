@@ -15,7 +15,7 @@ add_subdirectory(glConfig)
 # glad的库是个源代码文件, 所以得编译进可执行文件
 add_executable(10-ShaderClass ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
 
-# 注意msvc编译glfw库不能在mingw环境下运行
+
 target_link_libraries(10-ShaderClass ${PROJECT_SOURCE_DIR}/lib/libglfw3.a errorCheck application glConfig)
 
 # ======资源文件拷贝======

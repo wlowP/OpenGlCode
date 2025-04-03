@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # glfw, glad的库文件
 # 加载头文件. 其中的GLFW目录是glfw3的头文件目录, glad和KHR是glad的头文件目录
+# stb_image.h是读取图片的头文件库
 include_directories(${PROJECT_SOURCE_DIR}/include)
 # 加载源文件
 link_directories(${PROJECT_SOURCE_DIR}/lib)
@@ -36,3 +37,4 @@ add_subdirectory(9-DrawColor)
 add_subdirectory(10-ShaderClass)
 add_subdirectory(11-Uniform)
 add_subdirectory(12-Texture)
+add_subdirectory(13-TextureClass)
