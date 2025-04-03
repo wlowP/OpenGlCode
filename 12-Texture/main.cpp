@@ -39,8 +39,8 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
 // 定义和编译着色器
 void prepareShader() {
     shader = new Shader(
-        "assets/shader/vertex.glsl",
-        "assets/shader/fragment.glsl"
+        "assets/shader/default/vertex.glsl",
+        "assets/shader/default/fragment.glsl"
         );
 }
 
@@ -123,6 +123,7 @@ void prepareTexture() {
     // 2. 创建并绑定纹理对象
     glGenTextures(1, &texture);
     // 激活纹理单元0 (虽然默认情况下也会激活0) (默认一共有0-15, 共16个纹理单元)
+    // GL_TEXTURE0宏本身的值虽然不是0, 但是跟GL_TEXTURE1, 2..都是连续的, 于是可以GL_TEXTURE0 + 1来表示1号纹理单元
     glActiveTexture(GL_TEXTURE0);
     // 绑定纹理对象 (到gl状态机的GL_TEXTURE_2D插槽)
     // 📌📌同时还会将纹理对象自动绑定到当前激活的纹理单元上
@@ -165,7 +166,7 @@ void render() {
     // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-    shader->end();
+    Shader::end();
 }
 
 /*
@@ -183,7 +184,7 @@ void render() {
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "着色器API的封装")) {
+    if (!APP->init(800, 600, "纹理贴图")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }

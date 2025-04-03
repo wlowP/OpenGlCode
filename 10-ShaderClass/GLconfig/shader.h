@@ -27,6 +27,7 @@ public:
     void setVec3(const std::string& name, float v0, float v1, float v2) const;
     void setVec3(const std::string& name, const float* values) const;
     void setInt(const std::string& name, int value) const;
+    void setFloat(const std::string& name, float value) const;
 private:
     // 对于shader程序, 检查编译错误; 对于program, 检查链接错误
     void checkShaderError(GLuint target, const std::string& type);

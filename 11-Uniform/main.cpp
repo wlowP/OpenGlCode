@@ -12,8 +12,8 @@
 GLuint VAO;
 // 全局的Shader对象
 Shader* shader = nullptr;
-// 向GPU传递系统时间的uniform变量地址
-GLuint timeLocation;
+// 向GPU传递系统时间的uniform变量地址. 已经封装在Shader类中了
+// GLuint timeLocation;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -38,11 +38,11 @@ void prepareShader() {
     // 📌📌尽量将简单的渲染计算放到GPU(着色器代码)中去执行
     // 于是切换加载的shader源代码(或者直接创建并使用多个shaderProgram)即可实现不同的效果
     shader = new Shader(
-        "assets/shader-move/vertex.glsl",
-        "assets/shader-move/fragment.glsl"
+        "assets/shader/moving/vertex.glsl",
+        "assets/shader/moving/fragment.glsl"
     );
-    // 获取Uniform变量的地址
-    timeLocation = glGetUniformLocation(shader->getProgram(), "uTime");
+    // 获取Uniform变量的地址. 已经封装在Shader类中了
+    // timeLocation = glGetUniformLocation(shader->getProgram(), "uTime");
 }
 
 // 准备EBO
@@ -114,7 +114,8 @@ void render() {
 
     // 每一帧将程序运行时间传递给GPU. glfwGetTime()返回时间的单位是秒(double)
     // 想加快动画的速率可以直接乘以一个系数
-    glUniform1f(timeLocation, glfwGetTime() * 2);
+    // glUniform1f(timeLocation, glfwGetTime() * 2);
+    shader->setFloat("uTime", glfwGetTime() * 2);
     std::cout << "time: " << glfwGetTime() << std::endl;
 
     // glDrawArrays(GL_TRIANGLES, 0, 6);

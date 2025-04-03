@@ -72,7 +72,7 @@ Shader::Shader(const char* vsSrcPath, const char* fsSrcPath) {
     glDeleteShader(fragmentShader);
 }
 
-Shader::~Shader() {}
+Shader::~Shader() = default;
 
 void Shader::begin() const {
     GL_CALL(glUseProgram(program));
@@ -90,6 +90,9 @@ void Shader::setVec3(const std::string& name, const float* values) const {
 }
 void Shader::setInt(const std::string& name, int value) const {
     glUniform1i(glGetUniformLocation(program, name.c_str()), value);
+}
+void Shader::setFloat(const std::string& name, float value) const {
+    glUniform1f(glGetUniformLocation(program, name.c_str()), value);
 }
 
 void Shader::checkShaderError(GLuint target, const std::string& type) {
