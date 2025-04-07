@@ -27,6 +27,7 @@ Texture::Texture(const std::string& path, const int textureUnit) {
     glBindTexture(GL_TEXTURE_2D, texture);
 
     // 3. 传输纹理数据到GPU (会开辟GPU内存)
+    // 如果没有绑定纹理对象, 则传输数据会失败
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     // 📌别忘了释放图片数据(已经传输到GPU, 内存中就不需要了)
@@ -50,6 +51,12 @@ Texture::~Texture() {
 
 void Texture::bindTexture() const {
     // 先切换激活的纹理单元, 然后绑定纹理对象
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
+    glBindTexture(GL_TEXTURE_2D, texture);
+}
+
+void Texture::bindTexture(const int textureUnit) {
+    this->textureUnit = textureUnit;
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, texture);
 }

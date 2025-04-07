@@ -14,6 +14,8 @@ GLuint VAO;
 Shader* shader = nullptr;
 // 纹理对象
 Texture* textureGrass = nullptr;
+Texture* textureSoil = nullptr;
+Texture* textureNoise = nullptr;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -36,8 +38,8 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
 // 定义和编译着色器
 void prepareShader() {
     shader = new Shader(
-        "assets/shader/default/vertex.glsl",
-        "assets/shader/default/fragment.glsl"
+        "assets/shader/mix-texture/vertex.glsl",
+        "assets/shader/mix-texture/fragment.glsl"
         );
 }
 
@@ -114,8 +116,10 @@ void prepareEBOBuffer() {
 
 // 纹理加载
 void prepareTexture() {
-    textureGrass = new Texture("assets/texture/reisen.jpg", 0);
-    textureGrass->bindTexture();
+    // 构造函数内已经绑定了纹理对象
+    textureGrass = new Texture("assets/texture/grass.jpg", 0);
+    textureSoil = new Texture("assets/texture/land.jpg", 1);
+    textureNoise = new Texture("assets/texture/noise.jpg", 2);
 }
 
 // 执行渲染操作
@@ -130,7 +134,9 @@ void render() {
 
     // 通过uniform将采样器绑定到0号纹理单元上
     // -> 让采样器知道要采样哪个纹理单元
-    shader->setInt("sampler", 0);
+    shader->setInt("samplerGrass", 0);
+    shader->setInt("samplerSoil", 1);
+    shader->setInt("samplerNoise", 2);
 
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
@@ -143,7 +149,10 @@ void render() {
 }
 
 /*
- * 纹理相关API封装为类
+ * 多纹理读取并采样
+ * 混合纹理, 使得渲染结果具有多张纹理的特征
+ * 并且使用噪声纹理来实现混合的随机性
+ * 使用的noise.jpg是黑白噪声纹理, 特点是每个像素的rgb都相等
  */
 int main() {
     APP->test();
