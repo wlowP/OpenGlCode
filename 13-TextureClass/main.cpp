@@ -13,7 +13,7 @@ GLuint VAO;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
 // 纹理对象
-Texture* textureGrass = nullptr;
+Texture* texture = nullptr;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -114,8 +114,8 @@ void prepareEBOBuffer() {
 
 // 纹理加载
 void prepareTexture() {
-    textureGrass = new Texture("assets/texture/reisen.jpg", 0);
-    textureGrass->bindTexture();
+    texture = new Texture("assets/texture/reisen.jpg", 0);
+    texture->bindTexture();
 }
 
 // 执行渲染操作
@@ -178,6 +178,5 @@ int main() {
     // 4. 清理和关闭
     APP->destroy();
 
-    delete textureGrass;
     return 0;
 }

@@ -7,11 +7,11 @@ add_definitions(-DDEBUG)
 #add_subdirectory(exception)
 # 也直接链接了3-Application中的application库
 #add_subdirectory(application)
-#add_subdirectory(glConfig)
+#add_subdirectory(GLconfig)
 include_directories(
         ${PROJECT_SOURCE_DIR}/2-glad/exception
         ${PROJECT_SOURCE_DIR}/3-Application/application
-        ${PROJECT_SOURCE_DIR}/10-ShaderClass/glConfig
+        ${PROJECT_SOURCE_DIR}/10-ShaderClass/GLconfig
 )
 
 # glad的库是个源代码文件, 所以得编译进可执行文件

@@ -13,9 +13,7 @@ GLuint VAO;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
 // 纹理对象
-Texture* textureGrass = nullptr;
-Texture* textureSoil = nullptr;
-Texture* textureNoise = nullptr;
+Texture* texture = nullptr;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -38,8 +36,8 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
 // 定义和编译着色器
 void prepareShader() {
     shader = new Shader(
-        "assets/shader/mix-texture/vertex.glsl",
-        "assets/shader/mix-texture/fragment.glsl"
+        "assets/shader/default/vertex.glsl",
+        "assets/shader/default/fragment.glsl"
         );
 }
 
@@ -116,10 +114,8 @@ void prepareEBOBuffer() {
 
 // 纹理加载
 void prepareTexture() {
-    // 构造函数内已经绑定了纹理对象
-    textureGrass = new Texture("assets/texture/grass.jpg", 0);
-    textureSoil = new Texture("assets/texture/land.jpg", 1);
-    textureNoise = new Texture("assets/texture/noise.jpg", 2);
+    texture = new Texture("assets/texture/wall.jpg", 0);
+    texture->bindTexture();
 }
 
 // 执行渲染操作
@@ -134,9 +130,8 @@ void render() {
 
     // 通过uniform将采样器绑定到0号纹理单元上
     // -> 让采样器知道要采样哪个纹理单元
-    shader->setInt("samplerGrass", 0);
-    shader->setInt("samplerSoil", 1);
-    shader->setInt("samplerNoise", 2);
+    shader->setInt("sampler", 0);
+    shader->setFloat("uTime", glfwGetTime());
 
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
@@ -149,14 +144,13 @@ void render() {
 }
 
 /*
- * 多纹理读取并采样
- * 混合纹理, 使得渲染结果具有多张纹理的特征
- * 并且使用噪声纹理来实现混合的随机性
- * 使用的noise.jpg是黑白噪声纹理, 特点是每个像素的rgb都相等
+ * 手动实现MipMap, 但是为方便起见将同一张图片的不同裁剪尺寸当做不同的MipMap等级
+ *   - 1. 循环生成不同尺寸的纹理(MipMap的各个级别)
+ *   - 2. 顶点着色器内计算并判断当前的纹理级别
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "纹理混合")) {
+    if (!APP->init(800, 600, "手动实现MipMap")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }

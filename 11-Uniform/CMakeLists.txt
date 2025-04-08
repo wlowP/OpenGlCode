@@ -9,8 +9,8 @@ include_directories(${PROJECT_SOURCE_DIR}/2-glad/exception)
 # 也直接链接了3-Application中的application库
 #add_subdirectory(application)
 include_directories(${PROJECT_SOURCE_DIR}/3-Application/application)
-#add_subdirectory(glConfig)
-include_directories(${PROJECT_SOURCE_DIR}/10-ShaderClass/glConfig)
+#add_subdirectory(GLconfig)
+include_directories(${PROJECT_SOURCE_DIR}/10-ShaderClass/GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
 add_executable(11-Uniform ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
