@@ -38,8 +38,8 @@ void prepareShader() {
     // 📌📌尽量将简单的渲染计算放到GPU(着色器代码)中去执行
     // 于是切换加载的shader源代码(或者直接创建并使用多个shaderProgram)即可实现不同的效果
     shader = new Shader(
-        "assets/shader/moving/vertex.glsl",
-        "assets/shader/moving/fragment.glsl"
+        "assets/shader/rotate/vertex.glsl",
+        "assets/shader/rotate/fragment.glsl"
     );
     // 获取Uniform变量的地址. 已经封装在Shader类中了
     // timeLocation = glGetUniformLocation(shader->getProgram(), "uTime");
@@ -48,10 +48,16 @@ void prepareShader() {
 // 准备EBO
 void prepareEBOBuffer() {
     float positions[] = {
-        0.0f, -0.5f, 0.0f,
-        0.5f,  0.0f, 0.0f,
-        0.0f,  0.5f, 0.0f,
-       -0.5f,  0.0f, 0.0f
+        // 中心在(0, 0)的菱形
+        // 0.0f, -0.5f, 0.0f,
+        // 0.5f,  0.0f, 0.0f,
+        // 0.0f,  0.5f, 0.0f,
+       // -0.5f,  0.0f, 0.0f,
+        // 中心在(0, 0.5)的菱形(方便绕原点旋转用)
+        0.0f,  0.0f, 0.0f,
+       -0.5f,  0.5f, 0.0f,
+        0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f, 0.0f,
     };
     float colors[] = {
         1.0f, 0.0f, 0.0f,
@@ -118,7 +124,8 @@ void render() {
     shader->setFloat("uTime", glfwGetTime() * 2);
     std::cout << "time: " << glfwGetTime() << std::endl;
 
-    // glDrawArrays(GL_TRIANGLES, 0, 6);
+    // glPointSize(5.0f);
+    // glDrawArrays(GL_POINTS, 0, 6);
     // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
