@@ -60,3 +60,10 @@ void Texture::bindTexture(const int textureUnit) {
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, texture);
 }
+
+int Texture::getWidth() const {
+    return width;
+}
+int Texture::getHeight() const {
+    return height;
+}

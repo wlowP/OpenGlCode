@@ -9,12 +9,13 @@
 #include "Application.h"
 #include "shader.h"
 #include "GLconfig/TextureMipMap.h"
+#include "Texture.h"
 
 GLuint VAO;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
 // 纹理对象
-TextureMipMapManual* texture = nullptr;
+TextureMipMap* texture = nullptr;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -115,7 +116,7 @@ void prepareEBOBuffer() {
 
 // 纹理加载
 void prepareTexture() {
-    texture = new TextureMipMapManual("assets/texture/wall.jpg", 0);
+    texture = new TextureMipMap("assets/texture/reisen.jpg", 0);
     texture->bindTexture();
 }
 
@@ -145,9 +146,9 @@ void render() {
 }
 
 /*
- * 手动实现MipMap, 但是为方便起见将同一张图片的不同裁剪尺寸当做不同的MipMap等级
- *   - 1. 循环生成不同尺寸的纹理(MipMap的各个级别)
- *   - 2. 顶点着色器内计算并判断当前的纹理级别
+ * 使用OpenGL的自动生成MipMap功能
+ *  - glGenerateMipMap
+ *  - 设置GL_TEXTURE_MIN_FILTER过滤方式
  */
 int main() {
     APP->test();

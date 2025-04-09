@@ -25,6 +25,9 @@ public:
     // 将纹理对象绑定到指定的纹理单元上
     void bindTexture(int textureUnit);
 
+    int getWidth() const;
+    int getHeight() const;
+
 private:
     GLuint texture{0}; // OpenGL纹理对象
     int width{0}; // 纹理宽高

@@ -14,16 +14,25 @@ include_directories(
         # 应用程序头文件, 包含窗体对象, 尺寸等
         ${PROJECT_SOURCE_DIR}/3-Application/application
         # 着色器类头文件, 包含着色器对象, 着色器编译等
-        ${PROJECT_SOURCE_DIR}/10-ShaderClass/glConfig
+        ${PROJECT_SOURCE_DIR}/10-ShaderClass/GLconfig
+        # 纹理类头文件, 包含纹理对象, 纹理加载等
+        ${PROJECT_SOURCE_DIR}/13-TextureClass/GLconfig
 )
-# 纹理类头文件, 包含纹理对象, 纹理加载等
-# 本项目修改了纹理类的头文件, 需要重新编译
+# 纹理类头文件, 包含纹理对象, 纹理加载等(手动加载MipMap版本)
 add_subdirectory(GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
 add_executable(14-MipMap ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
+add_executable(14-MipMap-Auto ${PROJECT_SOURCE_DIR}/glad/glad.c auto-MipMap.cpp)
 
 target_link_libraries(14-MipMap
+        ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
+        errorCheck
+        application
+        glConfig
+        glConfig-texture-mipmap
+)
+target_link_libraries(14-MipMap-Auto
         ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
         errorCheck
         application
