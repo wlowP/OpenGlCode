@@ -5,16 +5,17 @@
 // 这里引用的是2-glad中的error_check.h, 在CMakeLists.txt中设置了include路径
 #include "error_check.h"
 // 3-Application中的Application.h
-
 #include "Application.h"
 #include "shader.h"
-#include "GLconfig/TextureMipMap.h"
+#include "TextureMipMap.h"
 
 GLuint VAO;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
 // 纹理对象
 TextureMipMap* texture = nullptr;
+// 当前的变换矩阵. (构造函数传递1.0f会初始化为单位矩阵)
+glm::mat4 transform(1.0f);
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -32,6 +33,43 @@ void keyCallback(const int key, int scancode, const int action, int mods) {
     if (action == GLFW_PRESS) {
         std::cout << "key pressed: " << key << std::endl;
     }
+}
+
+// 绕z轴旋转45度
+void rotate() {
+    /*
+     * glm::rotate用来生成旋转矩阵
+     * arg1: 当前变换矩阵. 会将生成的变换矩阵右乘到当前变化矩阵 ==> 📌📌注意矩阵*向量的乘法顺序. 越靠右变换的越先执行
+     * arg2: 旋转角度(弧度制, 需要用glm::radians转换)
+     * arg3: 旋转轴(单位向量)
+     */
+    transform = glm::rotate(transform,glm::radians(45.0f),glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+// 平移
+void translate() {
+    /*
+     * glm::translate用来生成平移矩阵
+     * arg1: 当前变换矩阵
+     * arg2: 平移向量
+     */
+    transform = glm::translate(transform,glm::vec3(0.5f, 0.5f, 0.0f));
+}
+
+// 缩放
+void scale() {
+    /*
+     * glm::scale用来生成缩放矩阵
+     * arg1: 当前变换矩阵
+     * arg2: 各个轴上的缩放因子
+     */
+    transform = glm::scale(transform,glm::vec3(0.5f, 0.5f, 1.0f));
+}
+
+void doTransform() {
+    rotate();
+    translate();
+    // scale();
 }
 
 // 定义和编译着色器
@@ -132,7 +170,7 @@ void render() {
     // 通过uniform将采样器绑定到0号纹理单元上
     // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
-    shader->setFloat("uTime", glfwGetTime());
+    shader->setMat4("transform", transform);
 
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
@@ -144,14 +182,15 @@ void render() {
     Shader::end();
 }
 
-/*
- * 使用OpenGL的自动生成MipMap功能
- *  - glGenerateMipMap
- *  - 设置GL_TEXTURE_MIN_FILTER过滤方式
+/**
+ * GLM数学库实现基本空间变换(平移, 旋转, 缩放)
+ *  - 引入glm中的一系列头文件. (因为很多地方需要用到, 所以在10-ShaderClass/GLconfig/core.h中包含)
+ *  - 顶点着色器内加入uniform变换矩阵, 着色器类中加入设置变换矩阵的方法
+ *  - 进行连续复合变换时, 📌📌注意矩阵乘向量的乘法顺序. p'=ABCp, 则变换顺序为CBA
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "调用OpenGL的自动生成MipMap功能")) {
+    if (!APP->init(800, 600, "GLM数学库实现基本空间变换")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -172,6 +211,8 @@ int main() {
     // 加载纹理
     prepareTexture();
 
+
+    doTransform();
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
     while (APP->update()) {

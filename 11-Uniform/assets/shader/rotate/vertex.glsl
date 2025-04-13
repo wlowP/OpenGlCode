@@ -8,6 +8,7 @@ void main()
 {
     // 计算到原点的距离
     float distance = length(aPos);
+    // 二维旋转公式
     gl_Position = vec4(aPos.x * cos(uTime) - aPos.y * sin(uTime), aPos.x * sin(uTime) + aPos.y * cos(uTime), aPos.z, 1.0);
     // color = aColor;
 
