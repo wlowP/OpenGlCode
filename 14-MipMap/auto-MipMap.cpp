@@ -9,7 +9,6 @@
 #include "Application.h"
 #include "shader.h"
 #include "GLconfig/TextureMipMap.h"
-#include "Texture.h"
 
 GLuint VAO;
 // 封装的着色器程序对象

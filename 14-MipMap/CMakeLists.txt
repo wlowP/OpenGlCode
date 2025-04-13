@@ -15,10 +15,8 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/3-Application/application
         # 着色器类头文件, 包含着色器对象, 着色器编译等
         ${PROJECT_SOURCE_DIR}/10-ShaderClass/GLconfig
-        # 纹理类头文件, 包含纹理对象, 纹理加载等
-        ${PROJECT_SOURCE_DIR}/13-TextureClass/GLconfig
 )
-# 纹理类头文件, 包含纹理对象, 纹理加载等(手动加载MipMap版本)
+# 纹理类头文件, 包含纹理对象, 纹理加载等(MipMap)
 add_subdirectory(GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
