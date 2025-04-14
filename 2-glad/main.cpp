@@ -83,7 +83,7 @@ int main() {
         // 执行画布清理操作(用glClearColor设置的颜色来清理(填充)画布)
         // 定义宏来封装errorCheck操作到函数调用之后
         // 设置glClear(-1)来触发错误检测
-        GL_CALL(glClear(GL_COLOR_BUFFER_BIT))
+        GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         // errorCheck();
 
         // 渲染操作...

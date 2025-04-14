@@ -36,3 +36,4 @@
 
 # 忽略任何目录下的cmake-build-debug
 cmake-build-debug/
+build/
