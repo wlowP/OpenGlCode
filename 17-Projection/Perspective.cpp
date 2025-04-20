@@ -20,7 +20,7 @@ glm::mat4 transform(1.0f);
 // 视图变换矩阵
 glm::mat4 viewMatrix(1.0f);
 // 正交投影变换矩阵
-glm::mat4 orthoMatrix(1.0f);
+glm::mat4 perspectiveMatrix(1.0f);
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -133,23 +133,24 @@ void prepareCamera() {
      *  - up: 穹顶方向
      */
     viewMatrix = glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(-3.0f, 0.0f, 2.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
 }
 
-void prepareOrthoProjection() {
+void preparePerspectiveProjection() {
     /*
-     * 使用glm::ortho函数来创建正交投影矩阵. 传入的参数决定投影盒(可视范围)的大小
-     *  - left/right: 左/右边界
-     *  - bottom/top: 下/上边界
-     *  - zNear/zFar: 近/远平面(注意是相机坐标系下的z轴, z值越小越"远")
+     * 使用glm::perspective函数来创建透视投影矩阵
+     *  - fovy: 视场角(弧度制)
+     *  - aspect: 近平面的宽高比, 可以与窗体宽高比相同
+     *  - near/far: 近/远平面距离, 为正数
      */
-    orthoMatrix = glm::ortho(
-        -2.0f, 2.0f,
-        -2.0f, 2.0f,
-        2.0f, -2.0f
+    perspectiveMatrix = glm::perspective(
+        glm::radians(60.0f),
+        (float)APP->getWidth() / (float)APP->getHeight(),
+        0.1f,
+        100.0f
     );
 }
 
@@ -168,7 +169,7 @@ void render() {
     shader->setInt("sampler", 0);
     shader->setMat4("transform", transform);
     shader->setMat4("viewMatrix", viewMatrix);
-    shader->setMat4("projectionMatrix", orthoMatrix);
+    shader->setMat4("projectionMatrix", perspectiveMatrix);
 
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
@@ -181,14 +182,12 @@ void render() {
 }
 
 /**
- * 正交投影
- *  - 通过glm::ortho函数来创建正交投影矩阵(此时已经经过视图变换, 在相机坐标系下)
- *  - 此时VBO顶点数据已经不用限定为NDC坐标了, 因为投影矩阵会转换
- *  - 剪裁(投影盒以外的内容不可见, 会被剪裁掉)
+ * 透视投影
+ *  - glm::perspective函数来创建透视投影矩阵
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "GLM 正交投影")) {
+    if (!APP->init(800, 600, "GLM 透视投影")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }
@@ -210,8 +209,8 @@ int main() {
     prepareTexture();
     // 设置摄像机参数
     prepareCamera();
-    // 设置正交投影参数
-    prepareOrthoProjection();
+    // 设置透视投影参数
+    preparePerspectiveProjection();
 
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环

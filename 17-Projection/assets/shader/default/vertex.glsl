@@ -20,6 +20,7 @@ void main() {
     // 变换顺序: 模型变换 -> 视图变换 -> 投影变换
     position = projectionMatrix * viewMatrix * transform * position;
 
+    // 输出的position为裁剪空间坐标, 会经过透视除法. 透视投影时, w分量一般不等于1
     gl_Position = position;
     color = aColor;
     uvTexCoord = aTexCoord;

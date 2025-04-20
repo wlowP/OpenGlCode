@@ -20,9 +20,17 @@ include_directories(
 )
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
-add_executable(17-Projection ${PROJECT_SOURCE_DIR}/glad/glad.c Orthographic.cpp)
+add_executable(17-Projection-Orthographic ${PROJECT_SOURCE_DIR}/glad/glad.c Orthographic.cpp)
+add_executable(17-Projection-Perspective ${PROJECT_SOURCE_DIR}/glad/glad.c Perspective.cpp)
 
-target_link_libraries(17-Projection
+target_link_libraries(17-Projection-Orthographic
+        ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
+        errorCheck
+        application
+        glConfig
+        glConfig-texture-mipmap
+)
+target_link_libraries(17-Projection-Perspective
         ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
         errorCheck
         application
