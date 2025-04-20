@@ -4,9 +4,10 @@
 
 // 这里引用的是2-glad中的error_check.h, 在CMakeLists.txt中设置了include路径
 #include "error_check.h"
-// 3-Application中的Application.h
 
 #include "application/Application.h"
+#include "application/camera/perspective.h"
+#include "application/camera/cameraController.h"
 #include "shader.h"
 #include "TextureMipMap.h"
 
@@ -22,6 +23,10 @@ glm::mat4 viewMatrix(1.0f);
 // 正交投影变换矩阵
 glm::mat4 perspectiveMatrix(1.0f);
 
+// 相机及其控制器对象
+Camera* camera = nullptr;
+CameraController* cameraController = nullptr;
+
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
     // 窗体变化响应
@@ -31,22 +36,20 @@ void framebufferSizeCallback(const int width, const int height) {
 }
 
 // 键盘输入的回调
-void keyCallback(const int key, int scancode, const int action, int mods) {
-    if (action == GLFW_PRESS) {
-        std::cout << "key pressed: " << key << std::endl;
-    }
+void keyCallback(const int key, const int action, int mods) {
+    cameraController->onKeyboard(key, action, mods);
 }
 
 // 鼠标点击的回调
 void mouseCallback(const int button, const int action, const int mods) {
-    if (action == GLFW_PRESS) {
-        std::cout << "mouse button pressed: " << button << std::endl;
-    }
+    double x, y;
+    APP->getMousePosition(x, y);
+    cameraController->onMouse(button, action, x, y);
 }
 
 // 鼠标移动的回调
-void cursorPosCallback(const double x, const double y) {
-    std::cout << "mouse cursor position: " << x << ", " << y << std::endl;
+void mouseMoveCallback(const double x, const double y) {
+    cameraController->onMouseMove(x, y);
 }
 
 // 定义和编译着色器
@@ -135,6 +138,14 @@ void prepareTexture() {
 
 // 摄像机状态
 void prepareCamera() {
+    camera = new PerspectiveCamera(
+        60.0f,
+        (float)APP->getWidth() / (float)APP->getHeight(),
+        0.1f, 1000.0f
+    );
+    cameraController = new CameraController();
+    cameraController->setCamera(camera);
+
     /*
      * 使用glm::lookAt函数来创建视图矩阵
      *  - eye: 相机位置. (📌📌以相机坐标系为原点, xyz轴超出[-1, 1]范围的内容将被裁剪, 不可见)
@@ -199,6 +210,7 @@ void render() {
  *      - 根据键盘鼠标的输入, 控制相机的移动和旋转
  *      - 设置回调函数的API在Application类中
  *      - 分为游戏相机以及轨迹球相机两种, 于是也设计为两个子类
+ *      - CameraController的update方法要在每一帧调用
  */
 int main() {
     APP->test();
@@ -215,7 +227,7 @@ int main() {
     // 鼠标点击
     APP->setOnMouseCallback(mouseCallback);
     // 鼠标移动
-    APP->setOnCursorPosCallback(cursorPosCallback);
+    APP->setOnMouseMoveCallback(mouseMoveCallback);
 
     // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
@@ -234,6 +246,7 @@ int main() {
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
     while (APP->update()) {
+        cameraController->update();
         // 渲染操作
         render();
     }

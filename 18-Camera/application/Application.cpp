@@ -116,7 +116,7 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
         std::cout << "OnKeyboardCallback not provided" << std::endl;
         return;
     }
-    app->onKeyboardCallback(key, scancode, action, mods);
+    app->onKeyboardCallback(key, action, mods);
 }
 
 /*
@@ -140,13 +140,17 @@ void Application::mouseCallback(GLFWwindow* window, int button, int action, int 
  */
 void Application::cursorPosCallback(GLFWwindow* window, double x, double y) {
     Application* app = (Application*)glfwGetWindowUserPointer(window);
-    if (app->onCursorPosCallback == nullptr) {
-        std::cout << "OnCursorPosCallback not provided" << std::endl;
+    if (app->onMouseMoveCallback == nullptr) {
+        std::cout << "onMouseMoveCallback not provided" << std::endl;
         return;
     }
-    app->onCursorPosCallback(x, y);
+    app->onMouseMoveCallback(x, y);
 }
 
+void Application::getMousePosition(double& x, double& y) const {
+    // 获取当前鼠标坐标(屏幕像素位置, 而不是NDC坐标)
+    glfwGetCursorPos(window, &x, &y);
+}
 
 
 Application::Application() = default;

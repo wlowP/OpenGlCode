@@ -14,7 +14,7 @@ class Camera {
 public:
     Camera();
     Camera(const glm::vec3& position, const glm::vec3& up, const glm::vec3& right);
-    ~Camera();
+    virtual ~Camera();
 
     // 相机位置. 默认在z轴上(0, 0, 1)
     glm::vec3 position{0.0f, 0.0f, 1.0f};

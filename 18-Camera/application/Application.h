@@ -13,11 +13,11 @@ class GLFWwindow;
 // 事件回调函数的函数指针类型
 using OnResizeCallback = void(*)(int width, int height);
 // 键盘输入回调
-using OnKeyboardCallback = void(*)(int key, int scancode, int action, int modes);
+using OnKeyboardCallback = void(*)(int key, int action, int modes);
 // 鼠标点击回调
 using OnMouseCallback = void(*)(int button, int action, int mods);
 // 鼠标移动回调
-using OnCursorPosCallback = void(*)(double x, double y);
+using OnMouseMoveCallback = void(*)(double x, double y);
 
 // 定义一个宏方便访问单例
 #define APP Application::getInstance()
@@ -50,6 +50,9 @@ public:
     uint32_t getWidth() const { return width; }
     uint32_t getHeight() const { return height; }
 
+    // 获取鼠标位置(使用glfw的函数)
+    void getMousePosition(double& x, double& y) const;
+
     // 用户设置事件回调
     // 窗体大小变化
     void setOnResizeCallback(const OnResizeCallback callback) {onResizeCallback = callback;}
@@ -58,7 +61,7 @@ public:
     // 鼠标点击输入
     void setOnMouseCallback(const OnMouseCallback callback) {onMouseCallback = callback;}
     // 鼠标移动输入
-    void setOnCursorPosCallback(const OnCursorPosCallback callback) {onCursorPosCallback = callback;}
+    void setOnMouseMoveCallback(const OnMouseMoveCallback callback) {onMouseMoveCallback = callback;}
 
     static void test() {
         std::cout << "Application test" << std::endl;
@@ -79,7 +82,7 @@ private:
     // 鼠标点击的回调
     OnMouseCallback onMouseCallback{nullptr};
     // 鼠标移动的回调
-    OnCursorPosCallback onCursorPosCallback{nullptr};
+    OnMouseMoveCallback onMouseMoveCallback{nullptr};
 
     // 应用程序的窗口
     GLFWwindow* window{nullptr};
