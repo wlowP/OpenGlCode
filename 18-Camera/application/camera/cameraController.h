@@ -25,7 +25,7 @@ public:
     // 各种setter
     void setCamera(Camera* camera) {this->camera = camera;}
     void setSensitivity(float sensitivity) {this->sensitivity = sensitivity;}
-    void setMoveSpeed(float moveSpeed) {this->moveSpeed = moveSpeed;}
+    void setTranslationpeed(float translationSpeed) {this->translationSpeed = translationSpeed;}
     void setZoomSpeed(float zoomSpeed) {this->zoomSpeed = zoomSpeed;}
 protected:
     // 鼠标按键状态
@@ -36,8 +36,8 @@ protected:
     float mouseX = 0.0f;
     float mouseY = 0.0f;
     // 灵敏度
-    float sensitivity = 0.2f; // 旋转
-    float moveSpeed = 0.01f; // 平移
+    float sensitivity = 0.05f; // 旋转
+    float translationSpeed = 0.01f; // 平移
     float zoomSpeed = 0.2f; // 缩放
 
     // 键盘按键状态. K-V = 按键码-是否按下

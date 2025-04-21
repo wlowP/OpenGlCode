@@ -10,6 +10,11 @@
 // C++中初始化类的静态成员变量的语法. 必须在类外面进行初始化
 Application* Application::instance = nullptr;
 
+Application::Application() = default;
+
+Application::~Application() = default;
+
+
 Application* Application::getInstance() {
     if (instance == nullptr) {
         instance = new Application();
@@ -168,7 +173,10 @@ void Application::getMousePosition(double& x, double& y) const {
     glfwGetCursorPos(window, &x, &y);
 }
 
-
-Application::Application() = default;
-
-Application::~Application() = default;
+void Application::setCursorVisible(bool visible) const {
+    if (visible) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    } else {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+}

@@ -9,6 +9,7 @@
 #include "application/camera/perspectiveCamera.h"
 #include "application/camera/orthographicCamera.h"
 #include "application/camera/trackballCameraController.h"
+#include "application/camera/gameCameraController.h"
 #include "shader.h"
 #include "TextureMipMap.h"
 
@@ -24,7 +25,9 @@ glm::mat4 transform(1.0f);
 PerspectiveCamera* perspectiveCamera = nullptr;
 OrthographicCamera* orthographicCamera = nullptr;
 Camera * currentCamera = nullptr; // 当前使用的相机
-TrackballCameraController* cameraController = nullptr;
+TrackballCameraController* trackballCameraController = nullptr;
+GameCameraController* gameCameraController = nullptr;
+CameraController* currentCameraController = nullptr; // 当前使用的相机控制器
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -40,24 +43,24 @@ void keyCallback(const int key, const int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         exit(0);
     }
-    cameraController->onKeyboard(key, action, mods);
+    currentCameraController->onKeyboard(key, action, mods);
 }
 
 // 鼠标点击的回调
 void mouseCallback(const int button, const int action, const int mods) {
     double x, y;
     APP->getMousePosition(x, y);
-    cameraController->onMouse(button, action, x, y);
+    currentCameraController->onMouse(button, action, x, y);
 }
 
 // 鼠标移动的回调
 void mouseMoveCallback(const double x, const double y) {
-    cameraController->onMouseMove(x, y);
+    currentCameraController->onMouseMove(x, y);
 }
 
 // 鼠标滚轮的回调
 void mouseScrollCallback(const double offsetX, const double offsetY) {
-    cameraController->onMouseScroll(offsetX, offsetY);
+    currentCameraController->onMouseScroll(offsetX, offsetY);
 }
 
 // 定义和编译着色器
@@ -146,6 +149,7 @@ void prepareTexture() {
 
 // 摄像机状态
 void prepareCamera() {
+    // ===相机对象===
     perspectiveCamera = new PerspectiveCamera(
         60.0f,
         (float)APP->getWidth() / (float)APP->getHeight(),
@@ -158,10 +162,19 @@ void prepareCamera() {
         orthoBoxSize, -orthoBoxSize
     );
     // 设置当前的相机
-    currentCamera = orthographicCamera;
-    cameraController = new TrackballCameraController();
-    cameraController->setCamera(currentCamera);
-    cameraController->setSensitivity(0.05f);
+    currentCamera = perspectiveCamera;
+
+    // ===相机控制器对象===
+    trackballCameraController = new TrackballCameraController();
+    gameCameraController = new GameCameraController();
+
+    // 设置当前的相机控制器
+    currentCameraController = gameCameraController;
+    // 游戏控制模式下隐藏并捕获鼠标光标
+    if (currentCameraController == gameCameraController) {
+        APP->setCursorVisible(false);
+    }
+    currentCameraController->setCamera(currentCamera);
 }
 
 // 执行渲染操作
@@ -241,7 +254,7 @@ int main() {
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
     while (APP->update()) {
-        cameraController->update();
+        currentCameraController->update();
         // 渲染操作
         render();
     }

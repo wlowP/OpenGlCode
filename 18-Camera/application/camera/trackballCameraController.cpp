@@ -15,13 +15,13 @@ void TrackballCameraController::onMouseMove(double x, double y) {
         float dx = (x - mouseX) * sensitivity;
         float dy = (y - mouseY) * sensitivity;
 
-        // 分别进行俯仰角和偏航角的变换. dx和dy当做弧度传递给glm::rotate. 加负号更符合人操控直觉
+        // 分别进行俯仰角和偏航角的变换. dx和dy当做角度传递给glm::rotate. 加负号更符合人操控直觉
         pitch(-dy);
         yaw(-dx);
     } else if (mouseRightDown) {
         // 右键按住拖动可以移动物体, 实则为移动相机
-        float dx = (x - mouseX) * moveSpeed;
-        float dy = (y - mouseY) * moveSpeed;
+        float dx = (x - mouseX) * translationSpeed;
+        float dy = (y - mouseY) * translationSpeed;
 
         translate(-dx, dy);
     }
@@ -34,7 +34,7 @@ void TrackballCameraController::onMouseMove(double x, double y) {
 // 是一个增量式的变换. 因为每次调用glm::rotate时, camera->right已经是经过上一轮变换的了
 void TrackballCameraController::pitch(float angle) {
     // 俯仰角变换, 包含了相机的up和position两个参数的变换, 可看做绕相机本身的"x轴"(right方向)旋转
-    glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), angle, camera->right);
+    glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), glm::radians(angle), camera->right);
     // 注意齐次坐标系中w=0表示方向. 📌📌glm库底层处理后, 4维向量赋值给3维向量时会自动丢弃w分量
     camera->up = rotate * glm::vec4(camera->up, 0.0f);
     // 位置也跟着一起旋转. 注意rotate的旋转轴是从原点出发
@@ -43,7 +43,7 @@ void TrackballCameraController::pitch(float angle) {
 
 void TrackballCameraController::yaw(float angle) {
     // 偏航角变换. 相机的up, right, position都会变化, 可看做绕世界y轴的旋转
-    glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
     camera->up = rotate * glm::vec4(camera->up, 0.0f);
     camera->right = rotate * glm::vec4(camera->right, 0.0f);
     camera->position = rotate * glm::vec4(camera->position, 1.0f);

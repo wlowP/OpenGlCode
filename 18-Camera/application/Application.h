@@ -48,12 +48,16 @@ public:
     // 销毁
     void destroy();
 
+    // 获取窗口指针
+    GLFWwindow* getWindow() const { return window; }
     // 获取窗口尺寸
     uint32_t getWidth() const { return width; }
     uint32_t getHeight() const { return height; }
 
     // 获取鼠标位置(使用glfw的函数)
     void getMousePosition(double& x, double& y) const;
+    // 显示/隐藏鼠标光标
+    void setCursorVisible(bool visible) const;
 
     // 用户设置事件回调(setter)
     // 窗体大小变化
