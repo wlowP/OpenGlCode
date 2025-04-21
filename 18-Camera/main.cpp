@@ -7,7 +7,7 @@
 
 #include "application/Application.h"
 #include "application/camera/perspective.h"
-#include "application/camera/cameraController.h"
+#include "application/camera/trackballCameraController.h"
 #include "shader.h"
 #include "TextureMipMap.h"
 
@@ -18,14 +18,10 @@ Shader* shader = nullptr;
 TextureMipMap* texture = nullptr;
 // 当前的模型变换矩阵. (构造函数传递1.0f会初始化为单位矩阵)
 glm::mat4 transform(1.0f);
-// 视图变换矩阵
-glm::mat4 viewMatrix(1.0f);
-// 正交投影变换矩阵
-glm::mat4 perspectiveMatrix(1.0f);
 
 // 相机及其控制器对象
-Camera* camera = nullptr;
-CameraController* cameraController = nullptr;
+PerspectiveCamera* camera = nullptr;
+TrackballCameraController* cameraController = nullptr;
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -143,35 +139,9 @@ void prepareCamera() {
         (float)APP->getWidth() / (float)APP->getHeight(),
         0.1f, 1000.0f
     );
-    cameraController = new CameraController();
+    cameraController = new TrackballCameraController();
     cameraController->setCamera(camera);
-
-    /*
-     * 使用glm::lookAt函数来创建视图矩阵
-     *  - eye: 相机位置. (📌📌以相机坐标系为原点, xyz轴超出[-1, 1]范围的内容将被裁剪, 不可见)
-     *  - center: 相机朝向(看向的位置)
-     *  - up: 穹顶方向
-     */
-    viewMatrix = glm::lookAt(
-        glm::vec3(-3.0f, 0.0f, 2.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f)
-    );
-}
-
-void preparePerspectiveProjection() {
-    /*
-     * 使用glm::perspective函数来创建透视投影矩阵
-     *  - fovy: 视场角(弧度制)
-     *  - aspect: 近平面的宽高比, 可以与窗体宽高比相同
-     *  - near/far: 近/远平面距离, 为正数
-     */
-    perspectiveMatrix = glm::perspective(
-        glm::radians(60.0f),
-        (float)APP->getWidth() / (float)APP->getHeight(),
-        0.1f,
-        100.0f
-    );
+    cameraController->setSensitivity(0.05f);
 }
 
 // 执行渲染操作
@@ -188,8 +158,8 @@ void render() {
     // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
     shader->setMat4("transform", transform);
-    shader->setMat4("viewMatrix", viewMatrix);
-    shader->setMat4("projectionMatrix", perspectiveMatrix);
+    shader->setMat4("viewMatrix", camera->getViewMatrix());
+    shader->setMat4("projectionMatrix", camera->getProjectionMatrix());
 
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
@@ -211,6 +181,9 @@ void render() {
  *      - 设置回调函数的API在Application类中
  *      - 分为游戏相机以及轨迹球相机两种, 于是也设计为两个子类
  *      - CameraController的update方法要在每一帧调用
+ *      -- 轨迹球相机
+ *          - 鼠标左键拖动可以旋转物体, 右键拖动可以平移物体, 滚轮缩放物体
+ *          - 注意正交缩放和透视缩放的区别. 正交缩放的倍率是非线性的(指数函数), 而透视缩放是线性的(直接平移相机, 近大远小)
  */
 int main() {
     APP->test();
@@ -240,8 +213,6 @@ int main() {
     prepareTexture();
     // 设置摄像机参数
     prepareCamera();
-    // 设置透视投影参数
-    preparePerspectiveProjection();
 
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环

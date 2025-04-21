@@ -17,6 +17,7 @@ public:
     virtual void onMouse(int button, int action, double x, double y);
     virtual void onMouseMove(double x, double y);
     virtual void onKeyboard(int key, int action, int mods);
+    virtual void onMouseScroll(double offsetX, double offsetY);
 
     // 需要每一帧更新的行为
     virtual void update();
@@ -34,6 +35,7 @@ protected:
     float mouseY = 0.0f;
     // 灵敏度
     float sensitivity = 0.2f;
+    float moveSpeed = 0.01f;
 
     // 键盘按键状态. K-V = 按键码-是否按下
     std::map<int, bool> keyState;

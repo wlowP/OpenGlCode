@@ -17,7 +17,7 @@ public:
     virtual ~Camera();
 
     // 相机位置. 默认在z轴上(0, 0, 1)
-    glm::vec3 position{0.0f, 0.0f, 1.0f};
+    glm::vec3 position{0.0f, 0.0f, 5.0f};
     // up方向(注意指的是相机本身本地坐标系的上方向而不是穹顶方向)
     glm::vec3 up{0.0f, 1.0f, 0.0f};
     // 相机本身的右方向

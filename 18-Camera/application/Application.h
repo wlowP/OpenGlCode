@@ -53,7 +53,7 @@ public:
     // 获取鼠标位置(使用glfw的函数)
     void getMousePosition(double& x, double& y) const;
 
-    // 用户设置事件回调
+    // 用户设置事件回调(setter)
     // 窗体大小变化
     void setOnResizeCallback(const OnResizeCallback callback) {onResizeCallback = callback;}
     // 键盘输入
