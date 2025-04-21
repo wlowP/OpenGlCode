@@ -40,14 +40,11 @@ void GameCameraController::yaw(float angle) {
 
 void GameCameraController::update() {
     // 最终移动方向, 注意别忘了归一化
-    // glm::vec3 direction = glm::normalize(camera->right * (keyState[GLFW_KEY_D] - keyState[GLFW_KEY_A]) +
-                            // camera->up * (keyState[GLFW_KEY_E] - keyState[GLFW_KEY_Q]) +
-                            // camera->front * (keyState[GLFW_KEY_W] - keyState[GLFW_KEY_S]));
     glm::vec3 direction(0.0f);
 
     glm::vec3 front = glm::cross(camera->up, camera->right);
 
-    if (keyState[GLFW_KEY_W]) {
+    /*if (keyState[GLFW_KEY_W]) {
         direction += front;
     }
     if (keyState[GLFW_KEY_S]) {
@@ -64,8 +61,12 @@ void GameCameraController::update() {
     }
     if (keyState[GLFW_KEY_LEFT_SHIFT]) {
         direction -= camera->up;
-    }
-    // direction长度可能为0
+    }*/
+    // 简化写法
+    direction = camera->right * (float)(keyState[GLFW_KEY_D] - keyState[GLFW_KEY_A]) +
+                camera->up * (float)(keyState[GLFW_KEY_SPACE] - keyState[GLFW_KEY_LEFT_SHIFT]) +
+                front * (float)(keyState[GLFW_KEY_W] - keyState[GLFW_KEY_S]);
+    // 注意direction长度可能为0
     if (glm::length(direction) > 0.0f) {
         direction = glm::normalize(direction);
         camera->position += direction * moveSpeed;

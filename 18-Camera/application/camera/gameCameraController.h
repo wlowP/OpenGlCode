@@ -22,7 +22,7 @@ private:
     // 记录俯仰角的累计变化量, 以便检测是否超过90度
     float pitchAngle = 0.0f;
     // WASD移动速度
-    float moveSpeed = 0.1f;
+    float moveSpeed = 0.02f;
 
     void pitch(float angle);
     void yaw(float angle);
