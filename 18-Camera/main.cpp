@@ -6,8 +6,8 @@
 #include "error_check.h"
 
 #include "application/Application.h"
-#include "application/camera/perspective.h"
-#include "application/camera/orthographic.h"
+#include "application/camera/perspectiveCamera.h"
+#include "application/camera/orthographicCamera.h"
 #include "application/camera/trackballCameraController.h"
 #include "shader.h"
 #include "TextureMipMap.h"
@@ -36,6 +36,10 @@ void framebufferSizeCallback(const int width, const int height) {
 
 // 键盘输入的回调
 void keyCallback(const int key, const int action, int mods) {
+    // 如果按下ESC键, 则退出程序
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        exit(0);
+    }
     cameraController->onKeyboard(key, action, mods);
 }
 
@@ -197,9 +201,11 @@ void render() {
  *      - 设置回调函数的API在Application类中
  *      - 分为游戏相机以及轨迹球相机两种, 于是也设计为两个子类
  *      - CameraController的update方法要在每一帧调用
- *      -- 轨迹球相机
+ *      2.1. 轨迹球相机
  *          - 鼠标左键拖动可以旋转物体, 右键拖动可以平移物体, 滚轮缩放物体
  *          - 注意正交缩放和透视缩放的区别. 正交缩放的倍率是非线性的(指数函数), 而透视缩放是线性的(直接平移相机, 近大远小)
+ *      2.2. 游戏相机
+ *          - WASD控制相机的前后左右移动, 鼠标移动控制相机的旋转
  */
 int main() {
     APP->test();

@@ -34,7 +34,6 @@ void TrackballCameraController::onMouseMove(double x, double y) {
 // 是一个增量式的变换. 因为每次调用glm::rotate时, camera->right已经是经过上一轮变换的了
 void TrackballCameraController::pitch(float angle) {
     // 俯仰角变换, 包含了相机的up和position两个参数的变换, 可看做绕相机本身的"x轴"(right方向)旋转
-    // 先旋转
     glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), angle, camera->right);
     // 注意齐次坐标系中w=0表示方向. 📌📌glm库底层处理后, 4维向量赋值给3维向量时会自动丢弃w分量
     camera->up = rotate * glm::vec4(camera->up, 0.0f);

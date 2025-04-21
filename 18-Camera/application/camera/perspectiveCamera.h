@@ -2,8 +2,8 @@
 // Created by ROG on 2025/4/20.
 //
 
-#ifndef PERSPECTIVE_H
-#define PERSPECTIVE_H
+#ifndef PERSPECTIVECAMERA_H
+#define PERSPECTIVECAMERA_H
 
 #include "camera.h"
 
@@ -24,4 +24,4 @@ public:
     void zoom(float deltaScale) override;
 };
 
-#endif //PERSPECTIVE_H
+#endif //PERSPECTIVECAMERA_H

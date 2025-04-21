@@ -2,8 +2,8 @@
 // Created by ROG on 2025/4/20.
 //
 
-#ifndef ORTHOGRAPHIC_H
-#define ORTHOGRAPHIC_H
+#ifndef ORTHOGRAPHICCAMERA_H
+#define ORTHOGRAPHICCAMERA_H
 
 #include "camera.h"
 
@@ -29,4 +29,4 @@ public:
     void zoom(float deltaScale) override;
 };
 
-#endif //ORTHOGRAPHIC_H
+#endif //ORTHOGRAPHICCAMERA_H
