@@ -17,7 +17,7 @@ public:
     virtual void onMouse(int button, int action, double x, double y);
     virtual void onMouseMove(double x, double y);
     virtual void onKeyboard(int key, int action, int mods);
-    virtual void onMouseScroll(double offsetX, double offsetY);
+    virtual void onMouseScroll(double offsetX, double offsetY);// offsetX, offsetY∈{-1, 1}
 
     // 需要每一帧更新的行为
     virtual void update();
@@ -25,6 +25,8 @@ public:
     // 各种setter
     void setCamera(Camera* camera) {this->camera = camera;}
     void setSensitivity(float sensitivity) {this->sensitivity = sensitivity;}
+    void setMoveSpeed(float moveSpeed) {this->moveSpeed = moveSpeed;}
+    void setZoomSpeed(float zoomSpeed) {this->zoomSpeed = zoomSpeed;}
 protected:
     // 鼠标按键状态
     bool mouseLeftDown = false;
@@ -34,8 +36,9 @@ protected:
     float mouseX = 0.0f;
     float mouseY = 0.0f;
     // 灵敏度
-    float sensitivity = 0.2f;
-    float moveSpeed = 0.01f;
+    float sensitivity = 0.2f; // 旋转
+    float moveSpeed = 0.01f; // 平移
+    float zoomSpeed = 0.2f; // 缩放
 
     // 键盘按键状态. K-V = 按键码-是否按下
     std::map<int, bool> keyState;

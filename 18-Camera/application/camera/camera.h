@@ -28,6 +28,9 @@ public:
 
     // 计算投影矩阵. 有正交投影和透视投影两种, 分别在子类中实现
     virtual glm::mat4 getProjectionMatrix() const;
+
+    // 相机缩放. 透视缩放与正交缩放的实现不同. deltaScale: 缩放比例的变化量
+    virtual void zoom(float deltaScale);
 };
 
 #endif //CAMERA_H

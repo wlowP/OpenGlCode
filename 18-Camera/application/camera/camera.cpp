@@ -24,3 +24,7 @@ glm::mat4 Camera::getProjectionMatrix() const {
     // 父类默认返回单位矩阵, 具体实现由子类实现
     return glm::identity<glm::mat4>();
 }
+
+void Camera::zoom(float deltaScale) {
+
+}

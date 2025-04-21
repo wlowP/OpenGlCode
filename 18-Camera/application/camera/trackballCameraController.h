@@ -13,6 +13,7 @@ public:
     ~TrackballCameraController();
 
     void onMouseMove(double x, double y) override;
+    void onMouseScroll(double offsetX, double offsetY) override;
 
 private:
     // 俯仰角变换(上下点头)

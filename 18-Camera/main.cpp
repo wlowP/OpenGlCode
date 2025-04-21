@@ -7,6 +7,7 @@
 
 #include "application/Application.h"
 #include "application/camera/perspective.h"
+#include "application/camera/orthographic.h"
 #include "application/camera/trackballCameraController.h"
 #include "shader.h"
 #include "TextureMipMap.h"
@@ -20,7 +21,9 @@ TextureMipMap* texture = nullptr;
 glm::mat4 transform(1.0f);
 
 // 相机及其控制器对象
-PerspectiveCamera* camera = nullptr;
+PerspectiveCamera* perspectiveCamera = nullptr;
+OrthographicCamera* orthographicCamera = nullptr;
+Camera * currentCamera = nullptr; // 当前使用的相机
 TrackballCameraController* cameraController = nullptr;
 
 // 窗口尺寸变化的回调
@@ -46,6 +49,11 @@ void mouseCallback(const int button, const int action, const int mods) {
 // 鼠标移动的回调
 void mouseMoveCallback(const double x, const double y) {
     cameraController->onMouseMove(x, y);
+}
+
+// 鼠标滚轮的回调
+void mouseScrollCallback(const double offsetX, const double offsetY) {
+    cameraController->onMouseScroll(offsetX, offsetY);
 }
 
 // 定义和编译着色器
@@ -134,13 +142,21 @@ void prepareTexture() {
 
 // 摄像机状态
 void prepareCamera() {
-    camera = new PerspectiveCamera(
+    perspectiveCamera = new PerspectiveCamera(
         60.0f,
         (float)APP->getWidth() / (float)APP->getHeight(),
         0.1f, 1000.0f
     );
+    float orthoBoxSize = 8.0f;
+    orthographicCamera = new OrthographicCamera(
+        -orthoBoxSize, orthoBoxSize,
+        -orthoBoxSize, orthoBoxSize,
+        orthoBoxSize, -orthoBoxSize
+    );
+    // 设置当前的相机
+    currentCamera = orthographicCamera;
     cameraController = new TrackballCameraController();
-    cameraController->setCamera(camera);
+    cameraController->setCamera(currentCamera);
     cameraController->setSensitivity(0.05f);
 }
 
@@ -158,8 +174,8 @@ void render() {
     // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
     shader->setMat4("transform", transform);
-    shader->setMat4("viewMatrix", camera->getViewMatrix());
-    shader->setMat4("projectionMatrix", camera->getProjectionMatrix());
+    shader->setMat4("viewMatrix", currentCamera->getViewMatrix());
+    shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
 
     // 📌📌绑定当前的VAO(包含几何结构)
     glBindVertexArray(VAO);
@@ -201,6 +217,8 @@ int main() {
     APP->setOnMouseCallback(mouseCallback);
     // 鼠标移动
     APP->setOnMouseMoveCallback(mouseMoveCallback);
+    // 鼠标滚轮
+    APP->setOnMouseScrollCallback(mouseScrollCallback);
 
     // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));

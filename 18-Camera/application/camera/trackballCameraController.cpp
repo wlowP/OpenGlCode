@@ -55,3 +55,8 @@ void TrackballCameraController::translate(float x, float y) {
     camera->position += camera->right * x;
     camera->position += camera->up * y;
 }
+
+void TrackballCameraController::onMouseScroll(double offsetX, double offsetY) {
+    camera->zoom(offsetY * zoomSpeed); // offsetY∈{-1, 1}
+}
+

@@ -59,6 +59,8 @@ bool Application::init(const int& width, const int& height, const char* title) {
     glfwSetMouseButtonCallback(window, mouseCallback);
     // 鼠标移动
     glfwSetCursorPosCallback(window, cursorPosCallback);
+    // 鼠标滚轮
+    glfwSetScrollCallback(window, scrollCallback);
 
     // 通过这个函数将app对象的指针附加到当前窗口, 以便在窗口相关的回调(键盘, 鼠标事件)中访问到app对象中各种自定义的数据
     glfwSetWindowUserPointer(window, this);
@@ -146,6 +148,20 @@ void Application::cursorPosCallback(GLFWwindow* window, double x, double y) {
     }
     app->onMouseMoveCallback(x, y);
 }
+
+/*
+ * 鼠标滚轮回调
+ *  offsetX, offsetY: 滚轮偏移量
+ */
+void Application::scrollCallback(GLFWwindow* window, double offsetX, double offsetY) {
+    Application* app = (Application*)glfwGetWindowUserPointer(window);
+    if (app->onMouseScrollCallback == nullptr) {
+        std::cout << "onMouseScrollCallback not provided" << std::endl;
+        return;
+    }
+    app->onMouseScrollCallback(offsetX, offsetY);
+}
+
 
 void Application::getMousePosition(double& x, double& y) const {
     // 获取当前鼠标坐标(屏幕像素位置, 而不是NDC坐标)

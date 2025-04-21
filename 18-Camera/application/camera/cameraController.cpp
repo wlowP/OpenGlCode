@@ -47,6 +47,11 @@ void CameraController::onKeyboard(int key, int action, int mods) {
     keyState[key] = pressed;
 }
 
+void CameraController::onMouseScroll(double offsetX, double offsetY) {
+
+}
+
+
 void CameraController::update() {
     // 子类没有公共的部分, 留到子类实现...
 }

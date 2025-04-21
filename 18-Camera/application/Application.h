@@ -18,6 +18,8 @@ using OnKeyboardCallback = void(*)(int key, int action, int modes);
 using OnMouseCallback = void(*)(int button, int action, int mods);
 // 鼠标移动回调
 using OnMouseMoveCallback = void(*)(double x, double y);
+// 鼠标滚轮回调
+using OnMouseScrollCallback = void(*)(double offsetX, double offsetY);
 
 // 定义一个宏方便访问单例
 #define APP Application::getInstance()
@@ -62,6 +64,8 @@ public:
     void setOnMouseCallback(const OnMouseCallback callback) {onMouseCallback = callback;}
     // 鼠标移动输入
     void setOnMouseMoveCallback(const OnMouseMoveCallback callback) {onMouseMoveCallback = callback;}
+    // 鼠标滚轮
+    void setOnMouseScrollCallback(const OnMouseScrollCallback callback) {onMouseScrollCallback = callback;}
 
     static void test() {
         std::cout << "Application test" << std::endl;
@@ -83,6 +87,8 @@ private:
     OnMouseCallback onMouseCallback{nullptr};
     // 鼠标移动的回调
     OnMouseMoveCallback onMouseMoveCallback{nullptr};
+    // 鼠标滚轮的回调
+    OnMouseScrollCallback onMouseScrollCallback{nullptr};
 
     // 应用程序的窗口
     GLFWwindow* window{nullptr};
@@ -97,6 +103,8 @@ private:
     static void mouseCallback(GLFWwindow* window, int button, int action, int mods);
     // 鼠标移动输入
     static void cursorPosCallback(GLFWwindow* window, double x, double y);
+    // 鼠标滚轮
+    static void scrollCallback(GLFWwindow* window, double offsetX, double offsetY);
 
     Application(); // 私有化构造方法
 };
