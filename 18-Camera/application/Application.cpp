@@ -94,6 +94,10 @@ void Application::destroy() {
     glfwTerminate();
 }
 
+void Application::closeWindow() const {
+    glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
 /*
  * 窗体大小变化回调
  *  width/height: 当前窗体宽高

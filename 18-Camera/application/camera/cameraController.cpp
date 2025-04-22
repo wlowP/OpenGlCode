@@ -35,8 +35,9 @@ void CameraController::onMouseMove(double x, double y) {
     // 子类没有公共的部分, 留到子类实现...
 }
 
+// 仅负责记录按键状态. 具体的处理逻辑在子类的update函数中实现
 void CameraController::onKeyboard(int key, int action, int mods) {
-    // 不处理一直按住的情况
+    // 此处不处理一直按住的情况, 留到子类的update函数中处理
     if (action == GLFW_REPEAT) {
         return;
     }

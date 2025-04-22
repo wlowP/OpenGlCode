@@ -4,7 +4,10 @@
 
 #include "gameCameraController.h"
 
-GameCameraController::GameCameraController() = default;
+GameCameraController::GameCameraController() {
+    // 默认移动方式是允许任意方向的移动
+    moveStrategy = new FreeMove();
+}
 GameCameraController::~GameCameraController() = default;
 
 void GameCameraController::onMouseMove(double x, double y) {
@@ -40,10 +43,9 @@ void GameCameraController::yaw(float angle) {
 
 void GameCameraController::update() {
     // 最终移动方向, 注意别忘了归一化
-    glm::vec3 direction(0.0f);
+    glm::vec3 direction;
 
-    glm::vec3 front = glm::cross(camera->up, camera->right);
-
+    // glm::vec3 front = glm::cross(camera->up, camera->right);
     /*if (keyState[GLFW_KEY_W]) {
         direction += front;
     }
@@ -63,13 +65,13 @@ void GameCameraController::update() {
         direction -= camera->up;
     }*/
     // 简化写法
-    direction = camera->right * (float)(keyState[GLFW_KEY_D] - keyState[GLFW_KEY_A]) +
-                camera->up * (float)(keyState[GLFW_KEY_SPACE] - keyState[GLFW_KEY_LEFT_SHIFT]) +
-                front * (float)(keyState[GLFW_KEY_W] - keyState[GLFW_KEY_S]);
+    direction = moveStrategy->computeDirection(camera->up, camera->right,
+                                              (float)(keyState[GLFW_KEY_W] - keyState[GLFW_KEY_S]),
+                                              (float)(keyState[GLFW_KEY_D] - keyState[GLFW_KEY_A]),
+                                              (float)(keyState[GLFW_KEY_SPACE] - keyState[GLFW_KEY_LEFT_SHIFT]));
     // 注意direction长度可能为0
     if (glm::length(direction) > 0.0f) {
         direction = glm::normalize(direction);
         camera->position += direction * moveSpeed;
     }
 }
-

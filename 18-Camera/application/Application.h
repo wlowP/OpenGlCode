@@ -48,6 +48,9 @@ public:
     // 销毁
     void destroy();
 
+    // 关闭窗口
+    void closeWindow() const;
+
     // 获取窗口指针
     GLFWwindow* getWindow() const { return window; }
     // 获取窗口尺寸

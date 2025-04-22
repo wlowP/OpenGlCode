@@ -25,6 +25,7 @@ set(CMAKE_EXE_LINKER_FLAGS -static)
 # experiment/e1-paint项目的glfw, glad库文件单独配置了, 用的是动态链接dll
 # =======================================================
 add_subdirectory(experiment/e1-paint)
+add_subdirectory(experiment/e2-3D-exploration)
 add_subdirectory(1-GLFW-window)
 add_subdirectory(2-glad)
 add_subdirectory(3-Application)

@@ -10,7 +10,8 @@
 #include "camera/orthographicCamera.h"
 #include "camera/trackballCameraController.h"
 #include "camera/gameCameraController.h"
-#include "GLconfig/geometry.h"
+#include "camera/gameControlMoveStrategy.h"
+#include "geometry.h"
 #include "shader.h"
 #include "TextureMipMap.h"
 
@@ -105,7 +106,7 @@ void prepareCamera() {
 
     // ===相机控制器对象===
     trackballCameraController = new TrackballCameraController();
-    gameCameraController = new GameCameraController();
+    gameCameraController = new GameCameraController(new PlanarMove());
 
     // 设置当前的相机控制器
     currentCameraController = gameCameraController;
