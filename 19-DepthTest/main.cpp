@@ -156,6 +156,7 @@ void preparePerspectiveProjection() {
     );
 }
 
+// 设置OpenGL状态机参数
 void prepareState() {
     // 启用深度测试
     glEnable(GL_DEPTH_TEST);
@@ -230,7 +231,7 @@ int main() {
     prepareCamera();
     // 设置透视投影参数
     preparePerspectiveProjection();
-    // 设置OpenGL状态
+    // 设置OpenGL状态机参数
     prepareState();
 
     // 3. 执行窗体循环. 📌📌每次循环为一帧
