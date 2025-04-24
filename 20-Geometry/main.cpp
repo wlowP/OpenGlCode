@@ -142,7 +142,7 @@ void render() {
     shader->setMat4("viewMatrix", currentCamera->getViewMatrix());
     shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
 
-    shader->setMat4("transform", geometry->getModelMatrix());
+    shader->setMat4("transform", Geometry::getModelMatrix());
     glBindVertexArray(geometry->getVAO());
     // 📌📌绑定当前的VAO(包含几何结构)
     // glDrawArrays(GL_TRIANGLES, 0, 6);

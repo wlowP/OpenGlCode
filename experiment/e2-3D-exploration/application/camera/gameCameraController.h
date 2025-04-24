@@ -7,11 +7,13 @@
 
 #include "cameraController.h"
 #include "gameControlMoveStrategy.h"
+#include "../../GLconfig/geometry.h"
 
 class GameCameraController : public CameraController {
 public:
     GameCameraController();
-    GameCameraController(GameControlMoveStrategy* moveStrategy) : moveStrategy(moveStrategy) {};
+    GameCameraController(GameControlMoveStrategy* moveStrategy);
+
     ~GameCameraController();
 
     // 鼠标移动直接旋转视角
@@ -24,14 +26,25 @@ public:
     void update() override;
 
     void setMoveSpeed(float moveSpeed) { this->moveSpeed = moveSpeed; }
+    // 设置碰撞体积
+    void setBoundingSpace(const Camera* camera, float boundingRadius);
+
+    BoundingSphere& getBoundingSphere() { return boundingSphere; }
+    BoundingBox& getBoundingBox() { return boundingBox; }
 private:
     // 记录俯仰角的累计变化量, 以便检测是否超过90度
     float pitchAngle = 0.0f;
     // WASD移动速度
     float moveSpeed = 0.02f;
+    // 碰撞检测: 相机的包围球和AABB包围盒, 默认尺寸是0.1f
+    BoundingSphere boundingSphere{ glm::vec3(0.0f), 0.1f };
+    BoundingBox boundingBox{ glm::vec3{-0.1f}, glm::vec3{0.1f} };
 
     // 相机控制器的移动策略, 默认是允许任意方向的移动(构造函数中初始化)
     GameControlMoveStrategy* moveStrategy;
+
+    // 检测相机移动stride距离时是否会与几何体实例相撞
+    bool checkCollision(GeometryInstance* b, glm::vec3& stride);
 
     void pitch(float angle);
     void yaw(float angle);

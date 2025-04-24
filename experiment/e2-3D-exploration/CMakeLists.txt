@@ -14,11 +14,11 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/10-ShaderClass/GLconfig
         # 纹理类头文件, 包含纹理对象, 纹理加载等(MipMap)
         ${PROJECT_SOURCE_DIR}/14-MipMap/GLconfig
-        # 应用程序头文件, 包含窗体对象, 尺寸等(适配相机系统), 以及相机系统类, 属于应用程序级别(因为其中并没有OpenGL的相关代码, 只是glm库的使用)
-        ${PROJECT_SOURCE_DIR}/18-Camera/application
-        # 几何类头文件, 包含VBO, VAO, EBO等的创建和绑定
-        ${PROJECT_SOURCE_DIR}/20-Geometry/GLconfig
 )
+# 应用程序头文件, 包含窗体对象, 尺寸等(适配相机系统), 以及相机系统类, 属于应用程序级别(因为其中并没有OpenGL的相关代码, 只是glm库的使用)
+add_subdirectory(application)
+# 几何类头文件, 包含VBO, VAO, EBO等的创建和绑定
+add_subdirectory(GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
 add_executable(e2-3D-exploration ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
@@ -27,10 +27,10 @@ add_executable(e2-3D-exploration-model ${PROJECT_SOURCE_DIR}/glad/glad.c model.c
 target_link_libraries(e2-3D-exploration
         ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
         errorCheck
-        application-with-camera
+        e2-application-with-camera
         glConfig
         glConfig-texture-mipmap
-        glConfig-geometry
+        e2-glConfig-geometry
 )
 target_link_libraries(e2-3D-exploration-model
         ${PROJECT_SOURCE_DIR}/lib/libglfw3.a

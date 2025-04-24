@@ -8,10 +8,37 @@
 #include "core.h"
 #include "TextureMipMap.h"
 
+// 包围球
+struct BoundingSphere {
+    glm::vec3 center{0.0f}; // 中心点
+    float radius{0.0f}; // 半径
+};
+// AABB包围盒
+struct BoundingBox {
+    glm::vec3 min{0.0f}; // 最小点
+    glm::vec3 max{0.0f}; // 最大点
+};
+// 包围球的碰撞检测, 直接比较半径范围即可
+inline bool isCollide(const BoundingSphere& a, const BoundingSphere& b) {
+    return glm::length(a.center - b.center) <= (a.radius + b.radius);
+}
+// AABB包围盒的碰撞检测
+inline bool isCollide(const BoundingBox& a, const BoundingBox& b) {
+    return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
+           (a.min.y <= b.max.y && a.max.y >= b.min.y) &&
+           (a.min.z <= b.max.z && a.max.z >= b.min.z);
+}
+
 class Geometry {
 public:
     Geometry();
     ~Geometry();
+
+    // 碰撞检测
+    // 模型空间的包围球
+    BoundingSphere boundingSphere;
+    // 模型空间的AABB包围盒
+    BoundingBox boundingBox;
 
     GLuint getVAO() const { return VAO; }
     GLuint getIndicesCount() const { return indicesCount; }
@@ -64,21 +91,16 @@ private:
 };
 
 /**
- * 场景中的几何体实例类
+ * 场景中的几何体实例类, 数据能public的都public了
  */
 class GeometryInstance {
 public:
-    GeometryInstance(Geometry* geometry) : geometry(geometry) {}
+    GeometryInstance(Geometry* geometry);
     // position: 几何体中心在世界坐标系中的初始位置
-    GeometryInstance(Geometry* geometry, const glm::vec3 position) : geometry(geometry) {
-        modelMatrix = glm::translate(modelMatrix, position);
-        shouldUpdateCenter = true;
-    }
-    ~GeometryInstance() { delete geometry; }
+    GeometryInstance(Geometry* geometry, glm::vec3 position);
+    ~GeometryInstance() = default;
 
     Geometry* geometry{nullptr}; // 几何体模型对象
-
-    glm::mat4 modelMatrix{1.0f}; // 模型变换矩阵
 
     // 每一帧都需要更新的操作变换矩阵, 例如旋转等小动画
     glm::mat4 updateMatrix{1.0f};
@@ -88,23 +110,34 @@ public:
 
     void update();
 
+    // 平移旋转缩放变换的矩阵
+    glm::mat4 translationMatrix{1.0f}; // 平移矩阵
+    glm::mat4 rotationMatrix{1.0f}; // 旋转矩阵
+    glm::mat4 scaleMatrix{1.0f}; // 缩放矩阵
+
     // 模型变换操作, 可以链式调用
     GeometryInstance* translate(const glm::vec3& translation);
     GeometryInstance* rotate(float angle, const glm::vec3& axis);
     GeometryInstance* scale(const glm::vec3& scale);
 
+    glm::mat4& getModelMatrix();
     // 获取几何体实例的世界坐标中心点
-    glm::vec3 getWorldCenter() {
-        if (shouldUpdateCenter) {
-            // 计算几何体实例的世界坐标中心点
-            center = glm::vec3(modelMatrix * glm::vec4(geometry->getModelCenter(), 1.0f));
-            shouldUpdateCenter = false;
-        }
-        return center;
-    }
+    glm::vec3& getWorldCenter();
+    // 获取几何体实例的包围球/AABB包围盒
+    BoundingSphere& getBoundingSphere();
+    BoundingBox& getBoundingBox();
 
 private:
     bool shouldUpdateCenter{false}; // 是否需要更新几何体实例的世界坐标中心点
+    bool shouldUpdateModelMatrix{false}; // 是否需要更新模型变换矩阵
+    glm::mat4 modelMatrix{1.0f}; // 模型变换矩阵
+
+    // 几何体实例的包围球/AABB包围盒
+    BoundingSphere boundingSphere;
+    BoundingBox boundingBox;
+
+    // 创建实例时初始化包围球/AABB包围盒
+    void initBoundingSpace();
 };
 
 #endif //GEOMETRY_H

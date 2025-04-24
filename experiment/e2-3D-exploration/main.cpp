@@ -1,5 +1,4 @@
 #include <iostream>
-#include <vector>
 #include <thread>
 
 #include "core.h"
@@ -7,24 +6,14 @@
 // 这里引用的是2-glad中的error_check.h, 在CMakeLists.txt中设置了include路径
 #include "error_check.h"
 
-#include "Application.h"
-#include "camera/perspectiveCamera.h"
-#include "camera/orthographicCamera.h"
-#include "camera/gameCameraController.h"
-#include "camera/gameControlMoveStrategy.h"
-#include "geometry.h"
+#include "application/Application.h"
+#include "application/camera/perspectiveCamera.h"
+#include "application/camera/gameCameraController.h"
+#include "application/camera/gameControlMoveStrategy.h"
+#include "GLconfig/geometry.h"
 #include "shader.h"
 
-// 渲染的几何体对象列表
-std::vector<GeometryInstance*> geometries;
-// 封装的着色器程序对象
-Shader* shader = nullptr;
-
-// 相机及其控制器对象
-PerspectiveCamera* perspectiveCamera = nullptr;
-Camera * currentCamera = nullptr; // 当前使用的相机
-GameCameraController* gameCameraController = nullptr;
-CameraController* currentCameraController = nullptr; // 当前使用的相机控制器
+#include "application/Global.h"
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -101,6 +90,8 @@ void prepareCamera() {
 
     // ===相机控制器对象===
     gameCameraController = new GameCameraController(new OrthoMove());
+    // 初始化游戏控制方式下的相机碰撞体积
+    gameCameraController->setBoundingSpace(currentCamera, 0.1f);
     // 设置当前的相机控制器
     currentCameraController = gameCameraController;
     // 游戏控制模式下隐藏并捕获鼠标光标
@@ -112,10 +103,8 @@ void prepareCamera() {
 void prepareState() {
     // 启用深度测试
     glEnable(GL_DEPTH_TEST);
-    // 设置深度测试函数. GL_LESS->保留深度值较小的. 近处遮挡远处
-    glDepthFunc(GL_LESS);
-    // 设置清除时的深度值. 默认值也为1.0f(远平面)
-    glClearDepth(1.0f);
+    glDepthFunc(GL_LESS); // 设置深度测试函数. GL_LESS->保留深度值较小的. 近处遮挡远处
+    glClearDepth(1.0f); // 设置清除时的深度值. 默认值也为1.0f(远平面)
 }
 
 // 命令行线程
@@ -143,19 +132,14 @@ void command() {
 
 // 执行渲染操作
 void render() {
-    // 画布清理操作也算渲染操作
     // 执行画布清理操作(用glClearColor设置的颜色来清理(填充)画布)
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     // 相机在每一帧都需要更新的操作. 比如游戏相机的WSAD移动
     currentCameraController->update();
 
-    // 📌📌绑定当前的shaderProgram(选定一个材质)
-    // glUseProgram(shaderProgram);
     shader->begin();
 
-    // 通过uniform将采样器绑定到0号纹理单元上
-    // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
     shader->setMat4("viewMatrix", currentCamera->getViewMatrix());
     shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
@@ -167,7 +151,7 @@ void render() {
         geometry->bind();
         instance->update();
         // 设置变换矩阵
-        shader->setMat4("transform", instance->modelMatrix);
+        shader->setMat4("transform", instance->getModelMatrix());
         // 绘制几何体
         glDrawElements(geometry->getPrimitiveType(), geometry->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
     }
