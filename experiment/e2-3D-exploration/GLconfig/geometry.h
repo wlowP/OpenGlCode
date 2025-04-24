@@ -98,6 +98,7 @@ public:
     GeometryInstance(Geometry* geometry);
     // position: 几何体中心在世界坐标系中的初始位置
     GeometryInstance(Geometry* geometry, glm::vec3 position);
+    GeometryInstance(Geometry* geometry, float x, float y, float z);
     ~GeometryInstance() = default;
 
     Geometry* geometry{nullptr}; // 几何体模型对象
@@ -108,8 +109,6 @@ public:
     // 几何体在世界坐标系中的中心点位置
     glm::vec3 center{0.0f};
 
-    void update();
-
     // 平移旋转缩放变换的矩阵
     glm::mat4 translationMatrix{1.0f}; // 平移矩阵
     glm::mat4 rotationMatrix{1.0f}; // 旋转矩阵
@@ -119,6 +118,7 @@ public:
     GeometryInstance* translate(const glm::vec3& translation);
     GeometryInstance* rotate(float angle, const glm::vec3& axis);
     GeometryInstance* scale(const glm::vec3& scale);
+    GeometryInstance* scale(float scaleX, float scaleY, float scaleZ);
 
     glm::mat4& getModelMatrix();
     // 获取几何体实例的世界坐标中心点
@@ -126,6 +126,12 @@ public:
     // 获取几何体实例的包围球/AABB包围盒
     BoundingSphere& getBoundingSphere();
     BoundingBox& getBoundingBox();
+
+    // 是否检测碰撞
+    bool detectCollision = true;
+
+    // 需要每一帧更新的行为, 目前仅支持应用updateMatrix
+    void update();
 
 private:
     bool shouldUpdateCenter{false}; // 是否需要更新几何体实例的世界坐标中心点

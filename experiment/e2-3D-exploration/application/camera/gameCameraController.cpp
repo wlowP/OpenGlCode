@@ -2,6 +2,8 @@
 // Created by ROG on 2025/4/21.
 //
 
+#include <iostream>
+
 #include "gameCameraController.h"
 #include "../Global.h"
 #include "../Application.h"
@@ -102,17 +104,23 @@ void GameCameraController::update() {
 
         // 检测碰撞
         for (const auto g : geometries) {
-            if (checkCollision(g, stride)) {
-                std::cout << "collision detected" << std::endl;
+            if (g->detectCollision && checkCollision(g, stride)) {
+                // std::cout << "collision detected" << std::endl;
                 return;
             }
         }
+        // std::cout << "camara position: " << glm::to_string(camera->position) << std::endl;
 
         camera->position += stride;
         // 更新相机的包围球和包围盒
         boundingSphere.center = camera->position;
         boundingBox.min += stride;
         boundingBox.max += stride;
+
+        // 检查是否到达终点
+        if (glm::length(camera->position - goalPos) <= 0.5f) {
+            std::cout << "you win!" << std::endl;
+        }
     }
     // 不移动的时候也可以检测被动的碰撞
 }

@@ -119,7 +119,7 @@ TextureMipMap::TextureMipMap(const std::string& path, const int textureUnit) {
 
     // 4. 设置纹理参数
     // 纹理过滤方式. 图片被放大时采用插值, 缩小时就不插值(取临近点像素)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // 📌📌手动实现MipMap: 别忘了设置当图片被缩小时的MipMap过滤方式
     // 最后一个参数为两个参数的组合: (GL_NEAREST|GL_LINEAR)_(MIPMAP_LINEAR|NEAREST)
     // GL_NEAREST: 在单个MipMap级别内使用最邻近采样

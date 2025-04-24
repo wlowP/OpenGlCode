@@ -12,8 +12,17 @@
 #include "application/camera/gameControlMoveStrategy.h"
 #include "GLconfig/geometry.h"
 #include "shader.h"
+#include "application/util.h"
 
 #include "application/Global.h"
+
+// 封装的着色器程序对象
+Shader* shader = nullptr;
+// 相机及其控制器对象
+PerspectiveCamera* perspectiveCamera = nullptr;
+Camera * currentCamera = nullptr; // 当前使用的相机
+GameCameraController* gameCameraController = nullptr;
+CameraController* currentCameraController = nullptr; // 当前使用的相机控制器
 
 // 窗口尺寸变化的回调
 void framebufferSizeCallback(const int width, const int height) {
@@ -58,21 +67,53 @@ void prepareShader() {
     );
 }
 
-// 创建几何体, 获取对应的VAO
+// 创建几何体, 组成地图场景
 void prepareGeometries() {
+    // 几何体模型
     Geometry* reisenBlock = Geometry::createBox(1.0f, 1.0f, 1.0f);
     reisenBlock->loadTexture("assets/texture/reisen.jpg");
     Geometry* brickBlock = Geometry::createBox(1.0f, 1.0f, 1.0f);
     brickBlock->loadTexture("assets/texture/bricks.png");
-    Geometry* floorPlane = Geometry::createPlane(20.0f, 20.0f, 10.0f);
+    Geometry* goldBlock = Geometry::createBox(1.0f, 1.0f, 1.0f);
+    goldBlock->loadTexture("assets/texture/gold_block.png");
+    Geometry* floorPlane = Geometry::createPlane(80.0f, 80.0f, 40);
     floorPlane->loadTexture("assets/texture/wall.jpg");
 
-    auto* reisenBlockInstance = new GeometryInstance(reisenBlock, glm::vec3(0, 1, -5));
+    // 几何体实例
+    auto* reisenBlockInstance = new GeometryInstance(reisenBlock, 0, 1, -50);
     reisenBlockInstance->scale(glm::vec3(2, 2, 2));
     reisenBlockInstance->updateMatrix = glm::rotate(reisenBlockInstance->updateMatrix, glm::radians(0.1f), glm::vec3(0, 1, 0));
     geometries.push_back(reisenBlockInstance);
-    geometries.push_back(new GeometryInstance(brickBlock));
-    geometries.push_back(new GeometryInstance(floorPlane));
+
+    // 生成迷宫
+    // 终点处的金块
+    auto* goldBlockInstance = new GeometryInstance(goldBlock, goalPos);
+    goldBlockInstance->scale(0.5f, 0.5f, 0.5f);
+    goldBlockInstance->detectCollision = false;
+    // 绕自身旋转, 先移到原点, 旋转完再移回来
+    goldBlockInstance->updateMatrix =
+        glm::translate(goldBlockInstance->updateMatrix, goldBlockInstance->getWorldCenter() * 1.0f) *
+        glm::rotate(goldBlockInstance->updateMatrix, glm::radians(0.5f), glm::vec3(0, 1, 0)) *
+        glm::translate(goldBlockInstance->updateMatrix, goldBlockInstance->getWorldCenter() * -1.0f);
+    geometries.push_back(goldBlockInstance);
+    // 迷宫矩阵(1->墙体, 0->空气)
+    const vector<vector<int>> maze = generateMaze(mazeRows, mazeCols, 1, 1, mazeCols - 2, mazeRows - 2);
+    std::cout << "generating maze..." << std::endl;
+    // 根据maze数组填充new GeometryInstance(brickBlock, x, y, z)
+    for (int i = 0; i < maze.size(); i++) {
+        for (int j = 0; j < maze[0].size(); j++) {
+            if (maze[i][j] == 1) {
+                auto* brickBlockInstance = new GeometryInstance(brickBlock, j, 0.5f, -i);
+                // brickBlockInstance->scale(glm::vec3(2, 2, 2));
+                geometries.push_back(brickBlockInstance);
+            }
+            cout << maze[i][j] << " ";
+        }
+        cout << std::endl;
+    }
+
+    auto* floorPlaneInstance = new GeometryInstance(floorPlane, 0, 0, 0);
+    geometries.push_back(floorPlaneInstance);
 }
 
 // 摄像机状态
@@ -84,14 +125,14 @@ void prepareCamera() {
         0.1f, 1000.0f
     );
     // 设置相机初始位置
-    perspectiveCamera->position = glm::vec3(0.0f, 0.5f, 5.0f);
+    perspectiveCamera->position = glm::vec3(1.0f, 0.2f, -1.0f);
     // 设置当前的相机
     currentCamera = perspectiveCamera;
 
     // ===相机控制器对象===
     gameCameraController = new GameCameraController(new OrthoMove());
     // 初始化游戏控制方式下的相机碰撞体积
-    gameCameraController->setBoundingSpace(currentCamera, 0.1f);
+    gameCameraController->setBoundingSpace(currentCamera, 0.2f);
     // 设置当前的相机控制器
     currentCameraController = gameCameraController;
     // 游戏控制模式下隐藏并捕获鼠标光标
@@ -164,7 +205,7 @@ void render() {
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "3D 场景漫游互动")) {
+    if (!APP->init(1500, 1125, "3D 场景漫游互动")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }

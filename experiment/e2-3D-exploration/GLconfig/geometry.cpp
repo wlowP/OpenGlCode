@@ -40,6 +40,10 @@ GeometryInstance::GeometryInstance(Geometry* geometry, const glm::vec3 position)
     shouldUpdateModelMatrix = true;
 }
 
+GeometryInstance::GeometryInstance(Geometry *geometry, float x, float y, float z) : GeometryInstance(geometry, glm::vec3(x, y, z)) {
+}
+
+
 void GeometryInstance::initBoundingSpace() {
     boundingSphere.center = geometry->boundingSphere.center;
     boundingSphere.radius = geometry->boundingSphere.radius;
@@ -81,6 +85,10 @@ GeometryInstance* GeometryInstance::scale(const glm::vec3& scale) {
     shouldUpdateModelMatrix = true;
     return this;
 }
+GeometryInstance *GeometryInstance::scale(float scaleX, float scaleY, float scaleZ) {
+    return scale(glm::vec3(scaleX, scaleY, scaleZ));
+}
+
 
 void GeometryInstance::update() {
     // 将updateMatrix作用到模型变换矩阵上
