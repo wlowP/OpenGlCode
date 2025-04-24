@@ -60,7 +60,8 @@ public:
     // 获取鼠标位置(使用glfw的函数)
     void getMousePosition(double& x, double& y) const;
     // 显示/隐藏鼠标光标
-    void setCursorVisible(bool visible) const;
+    void setCursorVisible(bool visible);
+    bool isCursorVisible() const { return cursorVisible; }
 
     // 用户设置事件回调(setter)
     // 窗体大小变化
@@ -99,6 +100,8 @@ private:
 
     // 应用程序的窗口
     GLFWwindow* window{nullptr};
+    // 光标是否可见
+    bool cursorVisible{true};
 
     // 实际执行的事件回调(绑定到GLFW的回调). 绑定的操作在init中进行
     // 设置为静态函数是为了方便引用(C++不允许指向成员函数的指针)

@@ -17,6 +17,9 @@ public:
     // 鼠标移动直接旋转视角
     void onMouseMove(double x, double y) override;
 
+    // 游戏控制需要监听一些特殊按键
+    void onKeyboard(int key, int action, int mods) override;
+
     // 每一帧持续性的更新, 比如按住WASD一直移动
     void update() override;
 

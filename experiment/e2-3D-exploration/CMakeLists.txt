@@ -38,8 +38,8 @@ target_link_libraries(e2-3D-exploration-model
 
 # ======资源文件拷贝======
 file(GLOB ASSETS
-        # 着色器源代码(加载了MVP矩阵变换)
-        ${PROJECT_SOURCE_DIR}/17-Projection/assets
+        # 着色器源代码 Uniform判断纯色模式或者纹理模式
+        ./assets
         # 纹理贴图
         ${PROJECT_SOURCE_DIR}/assets
 )

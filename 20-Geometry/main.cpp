@@ -20,8 +20,6 @@ Geometry* geometry = nullptr;
 Shader* shader = nullptr;
 // 纹理对象
 TextureMipMap* texture = nullptr;
-// 当前的模型变换矩阵. (构造函数传递1.0f会初始化为单位矩阵)
-glm::mat4 transform(1.0f);
 
 // 相机及其控制器对象
 PerspectiveCamera* perspectiveCamera = nullptr;
@@ -77,7 +75,7 @@ void prepareShader() {
 // 创建几何体, 获取对应的VAO
 void prepareVAO() {
     // geometry = Geometry::createBox(6.0f, 6.0f, 6.0f);
-    geometry = Geometry::createSphere(6.0f);
+    geometry = Geometry::createSphere(6.0f, 30, 30);
 }
 
 // 纹理加载
@@ -132,6 +130,8 @@ void render() {
     // 执行画布清理操作(用glClearColor设置的颜色来清理(填充)画布)
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
+    currentCameraController->update();
+
     // 📌📌绑定当前的shaderProgram(选定一个材质)
     // glUseProgram(shaderProgram);
     shader->begin();
@@ -139,13 +139,12 @@ void render() {
     // 通过uniform将采样器绑定到0号纹理单元上
     // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
-    shader->setMat4("transform", transform);
     shader->setMat4("viewMatrix", currentCamera->getViewMatrix());
     shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
 
-    // 📌📌绑定当前的VAO(包含几何结构)
+    shader->setMat4("transform", geometry->getModelMatrix());
     glBindVertexArray(geometry->getVAO());
-
+    // 📌📌绑定当前的VAO(包含几何结构)
     // glDrawArrays(GL_TRIANGLES, 0, 6);
     // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
     glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
@@ -192,7 +191,6 @@ int main() {
     // 3. 执行窗体循环. 📌📌每次循环为一帧
     // 窗体只要保持打开, 就会一直循环
     while (APP->update()) {
-        currentCameraController->update();
         // 渲染操作
         render();
     }

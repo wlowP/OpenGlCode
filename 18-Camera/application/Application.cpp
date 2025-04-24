@@ -177,10 +177,7 @@ void Application::getMousePosition(double& x, double& y) const {
     glfwGetCursorPos(window, &x, &y);
 }
 
-void Application::setCursorVisible(bool visible) const {
-    if (visible) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    } else {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    }
+void Application::setCursorVisible(bool visible) {
+    cursorVisible = visible;
+    glfwSetInputMode(window, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 }

@@ -3,12 +3,24 @@
 //
 
 #include "gameCameraController.h"
+#include "../Application.h"
 
 GameCameraController::GameCameraController() {
     // 默认移动方式是允许任意方向的移动
     moveStrategy = new FreeMove();
 }
 GameCameraController::~GameCameraController() = default;
+
+void GameCameraController::onKeyboard(int key, int action, int mods) {
+    // 先调用父类的onKeyboard函数, 记录按键状态
+    CameraController::onKeyboard(key, action, mods);
+
+    if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+        // 切换光标隐藏状态
+        APP->setCursorVisible(!APP->isCursorVisible());
+    }
+}
+
 
 void GameCameraController::onMouseMove(double x, double y) {
     float dx = (x - mouseX) * sensitivity;
