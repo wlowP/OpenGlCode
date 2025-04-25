@@ -46,7 +46,7 @@ private:
     GameControlMoveStrategy* moveStrategy;
 
     // 检测相机移动stride距离时是否会与几何体实例相撞
-    bool checkCollision(GeometryInstance* b, glm::vec3& stride);
+    bool checkCollision(GeometryInstance* b, const glm::vec3& stride);
 
     void pitch(float angle);
     void yaw(float angle);

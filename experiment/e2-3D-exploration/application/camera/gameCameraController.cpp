@@ -42,7 +42,7 @@ void GameCameraController::onKeyboard(int key, int action, int mods) {
             camera->zoom(2.0f);
         } else if (action == GLFW_RELEASE) {
             moveSpeed *= 0.5f;
-            camera->zoom(-2.0f);
+            camera->zoom(0.5);
         }
     }
 }
@@ -141,7 +141,7 @@ void GameCameraController::update() {
     // 不移动的时候也可以检测被动的碰撞
 }
 
-bool GameCameraController::checkCollision(GeometryInstance* b, glm::vec3& stride) {
+bool GameCameraController::checkCollision(GeometryInstance* b, const glm::vec3& stride) {
     // 阶段1：包围球快速排除
     auto sphereA = getBoundingSphere();
     sphereA.center += stride;

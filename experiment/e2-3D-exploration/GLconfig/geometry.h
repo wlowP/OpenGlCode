@@ -136,6 +136,9 @@ public:
 private:
     bool shouldUpdateCenter{false}; // 是否需要更新几何体实例的世界坐标中心点
     bool shouldUpdateModelMatrix{false}; // 是否需要更新模型变换矩阵
+    bool shouldUpdateBoundingSphere{false}; // 是否需要更新包围球
+    bool shouldUpdateBoundingBox{false}; // 是否需要更新AABB包围盒
+
     glm::mat4 modelMatrix{1.0f}; // 模型变换矩阵
 
     // 几何体实例的包围球/AABB包围盒

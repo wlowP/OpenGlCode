@@ -80,10 +80,10 @@ void prepareGeometries() {
     floorPlane->loadTexture("assets/texture/wall.jpg");
 
     // 几何体实例
-    auto* reisenBlockInstance = new GeometryInstance(reisenBlock, 0, 1, -50);
+    auto* reisenBlockInstance = new GeometryInstance(reisenBlock, 0, 1, -5);
     reisenBlockInstance->scale(glm::vec3(2, 2, 2));
     reisenBlockInstance->updateMatrix = glm::rotate(reisenBlockInstance->updateMatrix, glm::radians(0.1f), glm::vec3(0, 1, 0));
-    // geometries.push_back(reisenBlockInstance);
+    geometries.push_back(reisenBlockInstance);
 
     // 生成迷宫
     // 终点处的金块

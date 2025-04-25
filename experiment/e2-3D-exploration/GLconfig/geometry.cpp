@@ -67,6 +67,8 @@ GeometryInstance* GeometryInstance::translate(const glm::vec3& translation) {
     translationMatrix = glm::translate(translationMatrix, translation);
     shouldUpdateCenter = true;
     shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
     return this;
 }
 // 注意glm::rotation是围绕Y轴旋转的
@@ -75,12 +77,16 @@ GeometryInstance* GeometryInstance::rotate(float angle, const glm::vec3& axis) {
     rotationMatrix = glm::rotate(rotationMatrix, glm::radians(angle), axis);
     shouldUpdateCenter = true;
     shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
     return this;
 }
 GeometryInstance* GeometryInstance::scale(const glm::vec3& scale) {
     scaleMatrix = glm::scale(scaleMatrix, scale);
     shouldUpdateCenter = true;
     shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
     return this;
 }
 GeometryInstance *GeometryInstance::scale(float scaleX, float scaleY, float scaleZ) {
@@ -91,6 +97,10 @@ void GeometryInstance::update() {
     // 将updateMatrix直接作用到模型变换矩阵上
     modelMatrix = updateMatrix * modelMatrix;
     shouldUpdateCenter = true;
+    // modelMatrix已经被直接更新了, 不需要标记为脏
+    // shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
 }
 
 glm::mat4& GeometryInstance::getModelMatrix() {
@@ -112,45 +122,53 @@ glm::vec3& GeometryInstance::getWorldCenter() {
 }
 
 BoundingSphere& GeometryInstance::getBoundingSphere() {
-    boundingSphere.center = getWorldCenter();
-    // 取最大缩放轴
-    float maxScale = std::max(scaleMatrix[0][0], std::max(scaleMatrix[1][1], scaleMatrix[2][2]));
-    // 计算包围球半径
-    boundingSphere.radius = maxScale * geometry->boundingSphere.radius;
+    if (shouldUpdateBoundingSphere) {
+        boundingSphere.center = getWorldCenter();
+        // 取最大缩放轴
+        float maxScale = std::max(scaleMatrix[0][0], std::max(scaleMatrix[1][1], scaleMatrix[2][2]));
+        // 计算包围球半径
+        boundingSphere.radius = maxScale * geometry->boundingSphere.radius;
+
+        shouldUpdateBoundingSphere = false;
+    }
 
     return boundingSphere;
 }
 BoundingBox& GeometryInstance::getBoundingBox() {
-    // 计算几何体实例的AABB包围盒
-    glm::mat4& modelMatrix = getModelMatrix();
-    // 提取旋转缩放矩阵
-    // 给mat4传递mat3构造, 会自动提取前3行3列的矩阵
-    glm::mat3 rsMatrix = glm::mat3(modelMatrix);
-    // 计算变换后的中心
-    glm::vec3 center = getWorldCenter();
-    // 获取AABB盒半长向量
-    glm::vec3 halfLength = (geometry->boundingBox.max - geometry->boundingBox.min) * 0.5f ;
-    // boundingBox.min = center - rsMatrix * halfLength;
-    // boundingBox.max = center + rsMatrix * halfLength;
-    // 4. 计算变换后的半长向量（考虑矩阵绝对值）
+    if (shouldUpdateBoundingBox) {
+        // 计算几何体实例的AABB包围盒
+        glm::mat4& modelMatrix = getModelMatrix();
+        // 提取旋转缩放矩阵
+        // 给mat4传递mat3构造, 会自动提取前3行3列的矩阵
+        glm::mat3 rsMatrix = glm::mat3(modelMatrix);
+        // 计算变换后的中心
+        glm::vec3 center = getWorldCenter();
+        // 获取AABB盒半长向量
+        glm::vec3 halfLength = (geometry->boundingBox.max - geometry->boundingBox.min) * 0.5f ;
+        // boundingBox.min = center - rsMatrix * halfLength;
+        // boundingBox.max = center + rsMatrix * halfLength;
+        // 4. 计算变换后的半长向量（考虑矩阵绝对值）
 
-    // 将rsMatrix的每个分量都绝对值化
-    glm::vec3 transformedExtents;
-    transformedExtents.x = glm::abs(rsMatrix[0].x) * halfLength.x +
-                          glm::abs(rsMatrix[1].x) * halfLength.y +
-                          glm::abs(rsMatrix[2].x) * halfLength.z;
+        // 将rsMatrix的每个分量都绝对值化
+        glm::vec3 transformedExtents;
+        transformedExtents.x = glm::abs(rsMatrix[0].x) * halfLength.x +
+                              glm::abs(rsMatrix[1].x) * halfLength.y +
+                              glm::abs(rsMatrix[2].x) * halfLength.z;
 
-    transformedExtents.y = glm::abs(rsMatrix[0].y) * halfLength.x +
-                          glm::abs(rsMatrix[1].y) * halfLength.y +
-                          glm::abs(rsMatrix[2].y) * halfLength.z;
+        transformedExtents.y = glm::abs(rsMatrix[0].y) * halfLength.x +
+                              glm::abs(rsMatrix[1].y) * halfLength.y +
+                              glm::abs(rsMatrix[2].y) * halfLength.z;
 
-    transformedExtents.z = glm::abs(rsMatrix[0].z) * halfLength.x +
-                          glm::abs(rsMatrix[1].z) * halfLength.y +
-                          glm::abs(rsMatrix[2].z) * halfLength.z;
+        transformedExtents.z = glm::abs(rsMatrix[0].z) * halfLength.x +
+                              glm::abs(rsMatrix[1].z) * halfLength.y +
+                              glm::abs(rsMatrix[2].z) * halfLength.z;
 
-    // 5. 构建新AABB
-    boundingBox.min = center - transformedExtents;
-    boundingBox.max = center + transformedExtents;
+        // 5. 构建新AABB
+        boundingBox.min = center - transformedExtents;
+        boundingBox.max = center + transformedExtents;
+
+        shouldUpdateBoundingBox = false;
+    }
 
     return boundingBox;
 }
