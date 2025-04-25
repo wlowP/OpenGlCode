@@ -31,6 +31,8 @@ public:
 
     BoundingSphere& getBoundingSphere() { return boundingSphere; }
     BoundingBox& getBoundingBox() { return boundingBox; }
+
+    void setMoveStrategy(GameControlMoveStrategy* moveStrategy) { this->moveStrategy = moveStrategy; }
 private:
     // 记录俯仰角的累计变化量, 以便检测是否超过90度
     float pitchAngle = 0.0f;

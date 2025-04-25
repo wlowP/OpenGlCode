@@ -83,7 +83,7 @@ void prepareGeometries() {
     auto* reisenBlockInstance = new GeometryInstance(reisenBlock, 0, 1, -50);
     reisenBlockInstance->scale(glm::vec3(2, 2, 2));
     reisenBlockInstance->updateMatrix = glm::rotate(reisenBlockInstance->updateMatrix, glm::radians(0.1f), glm::vec3(0, 1, 0));
-    geometries.push_back(reisenBlockInstance);
+    // geometries.push_back(reisenBlockInstance);
 
     // 生成迷宫
     // 终点处的金块
@@ -97,7 +97,7 @@ void prepareGeometries() {
         glm::translate(goldBlockInstance->updateMatrix, goldBlockInstance->getWorldCenter() * -1.0f);
     geometries.push_back(goldBlockInstance);
     // 迷宫矩阵(1->墙体, 0->空气)
-    const vector<vector<int>> maze = generateMaze(mazeRows, mazeCols, 1, 1, mazeCols - 2, mazeRows - 2);
+    const vector<vector<int>> maze = generateMaze(mazeRows, mazeCols, 1, 1, goalPos.x, -goalPos.z);
     std::cout << "generating maze..." << std::endl;
     // 根据maze数组填充new GeometryInstance(brickBlock, x, y, z)
     for (int i = 0; i < maze.size(); i++) {
@@ -186,9 +186,9 @@ void render() {
     shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
 
     // 循环渲染所有的几何体
-    for (auto instance : geometries) {
-        Geometry* geometry = instance->geometry;
-        // 绑定几何体的VAO
+    for (const auto instance : geometries) {
+        const Geometry* geometry = instance->geometry;
+        // 绑定几何体对应的模型的VAO
         geometry->bind();
         instance->update();
         // 设置变换矩阵

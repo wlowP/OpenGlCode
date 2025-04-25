@@ -35,6 +35,16 @@ void GameCameraController::onKeyboard(int key, int action, int mods) {
         // 切换光标隐藏状态
         APP->setCursorVisible(!APP->isCursorVisible());
     }
+    // 按住左control, 增加移动速度
+    if (key == GLFW_KEY_LEFT_CONTROL) {
+        if (action == GLFW_PRESS) {
+            moveSpeed *= 2.0f;
+            camera->zoom(2.0f);
+        } else if (action == GLFW_RELEASE) {
+            moveSpeed *= 0.5f;
+            camera->zoom(-2.0f);
+        }
+    }
 }
 
 
@@ -102,6 +112,11 @@ void GameCameraController::update() {
         direction = glm::normalize(direction);
         glm::vec3 stride = direction * moveSpeed;
 
+        // 游戏结束后不会移动
+        if (win) {
+            return;
+        }
+
         // 检测碰撞
         for (const auto g : geometries) {
             if (g->detectCollision && checkCollision(g, stride)) {
@@ -120,6 +135,7 @@ void GameCameraController::update() {
         // 检查是否到达终点
         if (glm::length(camera->position - goalPos) <= 0.5f) {
             std::cout << "you win!" << std::endl;
+            win = true;
         }
     }
     // 不移动的时候也可以检测被动的碰撞

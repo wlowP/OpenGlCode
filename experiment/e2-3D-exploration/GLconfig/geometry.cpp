@@ -35,14 +35,12 @@ GeometryInstance::GeometryInstance(Geometry* geometry, const glm::vec3 position)
     initBoundingSpace();
     // 计算几何体实例的世界坐标中心点
     center = position;
-    // 计算模型变换矩阵
-    translationMatrix = glm::translate(glm::identity<glm::mat4>(), position);
-    shouldUpdateModelMatrix = true;
+    // 初始变换
+    translate(position);
 }
 
 GeometryInstance::GeometryInstance(Geometry *geometry, float x, float y, float z) : GeometryInstance(geometry, glm::vec3(x, y, z)) {
 }
-
 
 void GeometryInstance::initBoundingSpace() {
     boundingSphere.center = geometry->boundingSphere.center;
@@ -50,7 +48,6 @@ void GeometryInstance::initBoundingSpace() {
     boundingBox.min = geometry->boundingBox.min;
     boundingBox.max = geometry->boundingBox.max;
 }
-
 
 void Geometry::loadTexture(const std::string& filePath) {
     texture = new TextureMipMap(filePath, 0);
@@ -73,15 +70,16 @@ GeometryInstance* GeometryInstance::translate(const glm::vec3& translation) {
     return this;
 }
 // 注意glm::rotation是围绕Y轴旋转的
+// 初始的旋转和缩放变换并不会改变几何体中心点
 GeometryInstance* GeometryInstance::rotate(float angle, const glm::vec3& axis) {
     rotationMatrix = glm::rotate(rotationMatrix, glm::radians(angle), axis);
-    // shouldUpdateCenter = true;
+    shouldUpdateCenter = true;
     shouldUpdateModelMatrix = true;
     return this;
 }
 GeometryInstance* GeometryInstance::scale(const glm::vec3& scale) {
     scaleMatrix = glm::scale(scaleMatrix, scale);
-    // shouldUpdateCenter = true;
+    shouldUpdateCenter = true;
     shouldUpdateModelMatrix = true;
     return this;
 }
@@ -89,9 +87,8 @@ GeometryInstance *GeometryInstance::scale(float scaleX, float scaleY, float scal
     return scale(glm::vec3(scaleX, scaleY, scaleZ));
 }
 
-
 void GeometryInstance::update() {
-    // 将updateMatrix作用到模型变换矩阵上
+    // 将updateMatrix直接作用到模型变换矩阵上
     modelMatrix = updateMatrix * modelMatrix;
     shouldUpdateCenter = true;
 }
@@ -108,11 +105,12 @@ glm::mat4& GeometryInstance::getModelMatrix() {
 glm::vec3& GeometryInstance::getWorldCenter() {
     if (shouldUpdateCenter) {
         // 计算几何体实例的世界坐标中心点
-        center = glm::vec3(modelMatrix * glm::vec4(Geometry::getModelCenter(), 1.0f));
+        center = glm::vec3(getModelMatrix() * glm::vec4(Geometry::getModelCenter(), 1.0f));
         shouldUpdateCenter = false;
     }
     return center;
 }
+
 BoundingSphere& GeometryInstance::getBoundingSphere() {
     boundingSphere.center = getWorldCenter();
     // 取最大缩放轴
