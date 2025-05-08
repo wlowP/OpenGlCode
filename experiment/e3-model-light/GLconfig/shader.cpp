@@ -81,11 +81,17 @@ void Shader::end() {
     glUseProgram(0);
 }
 
+void Shader::setBool(const std::string &name, const bool value) const {
+    glUniform1i(glGetUniformLocation(program, name.c_str()), (int)value);
+}
 void Shader::setVec3(const std::string& name, const float v0, const float v1, const float v2) const {
     glUniform3f(glGetUniformLocation(program, name.c_str()), v0, v1, v2);
 }
 void Shader::setVec3(const std::string& name, const float* values) const {
     glUniform3fv(glGetUniformLocation(program, name.c_str()), 1, values);
+}
+void Shader::setVec3(const std::string& name, glm::vec3& value) const {
+    glUniform3fv(glGetUniformLocation(program, name.c_str()), 1, &value[0]);
 }
 void Shader::setInt(const std::string& name, const int value) const {
     glUniform1i(glGetUniformLocation(program, name.c_str()), value);
@@ -100,6 +106,10 @@ void Shader::setMat4(const std::string& name, const glm::mat4& mat) const {
     // 列主序: 列优先存储, 先存储列, 再存储行. 比如mat2((1, 2), (3, 4))会被存储为(1, 3, 2, 4)
     glUniformMatrix4fv(glGetUniformLocation(program, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
 }
+void Shader::setMat3(const std::string &name, const glm::mat3 &mat) const {
+    glUniformMatrix3fv(glGetUniformLocation(program, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+}
+
 
 void Shader::checkShaderError(GLuint target, const std::string& type) {
     int success = 0;

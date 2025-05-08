@@ -12,9 +12,12 @@
 #include "GLconfig/Texture.h"
 
 // 渲染的几何体对象
-Geometry* geometry = nullptr;
+GeometryInstance* geometry = nullptr;
+// 光源对象
+GeometryInstance* lightSource = nullptr;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
+Shader* lightSourceShader = nullptr;
 // 纹理对象
 TextureMipMap* texture = nullptr;
 
@@ -67,18 +70,27 @@ void prepareShader() {
         "assets/shader/default/vertex.glsl",
         "assets/shader/default/fragment.glsl"
     );
+    lightSourceShader = new Shader(
+        "assets/shader/lightSource/vertex.glsl",
+        "assets/shader/lightSource/fragment.glsl"
+    );
 }
 
 // 创建几何体, 获取对应的VAO
-void prepareVAO() {
-    // geometry = Geometry::createBox(6.0f, 6.0f, 6.0f);
-    geometry = Geometry::createSphere(6.0f, 30, 30);
-}
+void prepareGeometries() {
+    Geometry* box = Geometry::createBox(1, 1, 1, glm::vec3(1.0, 0.5, 0.31));
+    box->loadTexture("assets/texture/reisen.jpg");
+    geometry = new GeometryInstance(box);
+    // geometry->scale(3, 3, 3);
+    geometry->updateMatrix = glm::rotate(geometry->updateMatrix, glm::radians(-0.1f), glm::vec3(0, 1, 0));
+    geometry->useTexture = false;
 
-// 纹理加载
-void prepareTexture() {
-    texture = new TextureMipMap("assets/texture/reisen.jpg", 0);
-    texture->bindTexture();
+    // 光源几何体
+    Geometry* lightBox = Geometry::createSphere(1, 60, 60, glm::vec3(1, 1, 1));
+    lightSource = new GeometryInstance(lightBox, 1.2, 1, 2);
+    lightSource->scale(0.3, 0.3, 0.3);
+    lightSource->updateMatrix = glm::rotate(lightSource->updateMatrix, glm::radians(0.2f), glm::vec3(0, 1, 0));
+    lightSource->useTexture = false;
 }
 
 // 摄像机状态
@@ -129,22 +141,44 @@ void render() {
 
     currentCameraController->update();
 
+    // ==================绘制光源物体. 采用另一个着色器程序, 防止光源本身被影响==================
+    lightSourceShader->begin();
+    lightSourceShader->setInt("sampler", 0);
+    lightSourceShader->setMat4("viewMatrix", currentCamera->getViewMatrix());
+    lightSourceShader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
+
+    const Geometry* lightSourceModel = lightSource->geometry;
+    lightSourceModel->bind();
+    lightSourceShader->setBool("useTexture", lightSource->useTexture);
+    lightSource->update();
+    lightSourceShader->setMat4("model", lightSource->getModelMatrix());
+    glDrawElements(lightSourceModel->getPrimitiveType(), lightSourceModel->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
+
+    // ==================绘制几何体场景==================
+
     // 📌📌绑定当前的shaderProgram(选定一个材质)
     // glUseProgram(shaderProgram);
     shader->begin();
-
     // 通过uniform将采样器绑定到0号纹理单元上
     // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
     shader->setMat4("viewMatrix", currentCamera->getViewMatrix());
     shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
 
-    shader->setMat4("transform", Geometry::getModelMatrix());
-    glBindVertexArray(geometry->getVAO());
-    // 📌📌绑定当前的VAO(包含几何结构)
-    // glDrawArrays(GL_TRIANGLES, 0, 6);
-    // 使用EBO顶点索引绘制. 加载了EBO后indices参数表示EBO内偏移量
-    glDrawElements(GL_TRIANGLES, geometry->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
+    // 光源属性
+    shader->setVec3("lightPosition", lightSource->getWorldCenter());
+    shader->setVec3("viewPosition", currentCamera->position);
+
+    const Geometry* geometryModel = geometry->geometry;
+    // 绑定几何体对应的模型的VAO
+    geometryModel->bind();
+    shader->setBool("useTexture", geometry->useTexture);
+    geometry->update();
+    // 设置变换矩阵以及法线矩阵
+    shader->setMat4("model", geometry->getModelMatrix());
+    shader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(geometry->getModelMatrix()))));
+    // 绘制几何体
+    glDrawElements(geometryModel->getPrimitiveType(), geometryModel->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
 
     Shader::end();
 }
@@ -172,14 +206,12 @@ int main() {
     APP->setOnMouseScrollCallback(mouseScrollCallback);
 
     // 设置擦除画面时的颜色. (擦除画面其实就是以另一种颜色覆盖当前画面)
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     // 编译着色器
     prepareShader();
     // 初始化VBO, VAO等资源
-    prepareVAO();
-    // 加载纹理
-    prepareTexture();
+    prepareGeometries();
     // 设置摄像机参数
     prepareCamera();
     // 设置OpenGL状态机参数

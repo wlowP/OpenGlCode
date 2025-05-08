@@ -2,6 +2,7 @@
 // Created by ROG on 2025/4/22.
 //
 
+#include <iostream>
 #include <vector>
 #include "geometry.h"
 #include "shader.h"
@@ -25,6 +26,29 @@ Geometry::~Geometry() {
     }
 }
 
+GeometryInstance::GeometryInstance(Geometry *geometry) : geometry(geometry) {
+    initBoundingSpace();
+}
+
+
+GeometryInstance::GeometryInstance(Geometry* geometry, const glm::vec3 position) : geometry(geometry) {
+    initBoundingSpace();
+    // 计算几何体实例的世界坐标中心点
+    center = position;
+    // 初始变换
+    translate(position);
+}
+
+GeometryInstance::GeometryInstance(Geometry *geometry, float x, float y, float z) : GeometryInstance(geometry, glm::vec3(x, y, z)) {
+}
+
+void GeometryInstance::initBoundingSpace() {
+    boundingSphere.center = geometry->boundingSphere.center;
+    boundingSphere.radius = geometry->boundingSphere.radius;
+    boundingBox.min = geometry->boundingBox.min;
+    boundingBox.max = geometry->boundingBox.max;
+}
+
 void Geometry::loadTexture(const std::string& filePath) {
     texture = new TextureMipMap(filePath, 0);
 }
@@ -39,33 +63,122 @@ void Geometry::bind() const {
 }
 
 GeometryInstance* GeometryInstance::translate(const glm::vec3& translation) {
-    modelMatrix = glm::translate(modelMatrix, translation);
+    // 累加变换
+    translationMatrix = glm::translate(translationMatrix, translation);
     shouldUpdateCenter = true;
+    shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
     return this;
 }
+// 注意glm::rotation是围绕Y轴旋转的
+// 初始的旋转和缩放变换并不会改变几何体中心点
 GeometryInstance* GeometryInstance::rotate(float angle, const glm::vec3& axis) {
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), axis);
+    rotationMatrix = glm::rotate(rotationMatrix, glm::radians(angle), axis);
     shouldUpdateCenter = true;
+    shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
     return this;
 }
 GeometryInstance* GeometryInstance::scale(const glm::vec3& scale) {
-    modelMatrix = glm::scale(modelMatrix, scale);
+    scaleMatrix = glm::scale(scaleMatrix, scale);
     shouldUpdateCenter = true;
+    shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
     return this;
+}
+GeometryInstance *GeometryInstance::scale(float scaleX, float scaleY, float scaleZ) {
+    return scale(glm::vec3(scaleX, scaleY, scaleZ));
 }
 
 void GeometryInstance::update() {
-    // 将updateMatrix作用到模型变换矩阵上
+    // 将updateMatrix直接作用到模型变换矩阵上
     modelMatrix = updateMatrix * modelMatrix;
+    shouldUpdateCenter = true;
+    // modelMatrix已经被直接更新了, 不需要标记为脏
+    // shouldUpdateModelMatrix = true;
+    shouldUpdateBoundingSphere = true;
+    shouldUpdateBoundingBox = true;
 }
 
+glm::mat4& GeometryInstance::getModelMatrix() {
+    if (shouldUpdateModelMatrix) {
+        // 计算模型变换矩阵. 注意乘法顺序是T * R * S, 则变换顺序是S * R * T
+        modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+        shouldUpdateModelMatrix = false;
+    }
+    return modelMatrix;
+}
+
+glm::vec3& GeometryInstance::getWorldCenter() {
+    if (shouldUpdateCenter) {
+        // 计算几何体实例的世界坐标中心点
+        center = glm::vec3(getModelMatrix() * glm::vec4(Geometry::getModelCenter(), 1.0f));
+        shouldUpdateCenter = false;
+    }
+    return center;
+}
+
+BoundingSphere& GeometryInstance::getBoundingSphere() {
+    if (shouldUpdateBoundingSphere) {
+        boundingSphere.center = getWorldCenter();
+        // 取最大缩放轴
+        float maxScale = std::max(scaleMatrix[0][0], std::max(scaleMatrix[1][1], scaleMatrix[2][2]));
+        // 计算包围球半径
+        boundingSphere.radius = maxScale * geometry->boundingSphere.radius;
+
+        shouldUpdateBoundingSphere = false;
+    }
+
+    return boundingSphere;
+}
+BoundingBox& GeometryInstance::getBoundingBox() {
+    if (shouldUpdateBoundingBox) {
+        // 计算几何体实例的AABB包围盒
+        glm::mat4& modelMatrix = getModelMatrix();
+        // 提取旋转缩放矩阵
+        // 给mat4传递mat3构造, 会自动提取前3行3列的矩阵
+        glm::mat3 rsMatrix = glm::mat3(modelMatrix);
+        // 计算变换后的中心
+        glm::vec3 center = getWorldCenter();
+        // 获取AABB盒半长向量
+        glm::vec3 halfLength = (geometry->boundingBox.max - geometry->boundingBox.min) * 0.5f ;
+        // boundingBox.min = center - rsMatrix * halfLength;
+        // boundingBox.max = center + rsMatrix * halfLength;
+        // 4. 计算变换后的半长向量（考虑矩阵绝对值）
+
+        // 将rsMatrix的每个分量都绝对值化
+        glm::vec3 transformedExtents;
+        transformedExtents.x = glm::abs(rsMatrix[0].x) * halfLength.x +
+                              glm::abs(rsMatrix[1].x) * halfLength.y +
+                              glm::abs(rsMatrix[2].x) * halfLength.z;
+
+        transformedExtents.y = glm::abs(rsMatrix[0].y) * halfLength.x +
+                              glm::abs(rsMatrix[1].y) * halfLength.y +
+                              glm::abs(rsMatrix[2].y) * halfLength.z;
+
+        transformedExtents.z = glm::abs(rsMatrix[0].z) * halfLength.x +
+                              glm::abs(rsMatrix[1].z) * halfLength.y +
+                              glm::abs(rsMatrix[2].z) * halfLength.z;
+
+        // 5. 构建新AABB
+        boundingBox.min = center - transformedExtents;
+        boundingBox.max = center + transformedExtents;
+
+        shouldUpdateBoundingBox = false;
+    }
+
+    return boundingBox;
+}
 
 // ===============================================================
 // ===创建几何体的工厂方法==========================================
 // =========创建的时候几何体中心都会在世界坐标系的原点================
 // ===============================================================
 
-Geometry* Geometry::createBox(float length, float width, float height) {
+Geometry* Geometry::createBox(float length, float width, float height, const glm::vec3 color) {
     Geometry* box = new Geometry();
 
     float halfLength = length / 2.0f,
@@ -106,39 +219,46 @@ Geometry* Geometry::createBox(float length, float width, float height) {
          halfLength, -halfHeight,  halfWidth,
         -halfLength, -halfHeight,  halfWidth,
     };
-    // 颜色, 暂且默认都是白色
-    float colors[] = {
+    // 法线数据
+    float normals[] = {
         // 正面
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
         // 背面
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
         // 左面
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
         // 右面
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
         // 顶面
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
         // 底面
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
+        0.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
     };
+    // 颜色
+    float colors[4 * 6 * 3];
+    for (int i = 0; i < 24; ++i) {
+        colors[i * 3 + 0] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+    }
     // 纹理坐标数据
     float uvs[] = {
         // 正面
@@ -184,6 +304,12 @@ Geometry* Geometry::createBox(float length, float width, float height) {
     // 顶点索引数量
     box->indicesCount = sizeof(indices) / sizeof(unsigned int);
 
+    // 计算包围球和AABB包围盒
+    box->boundingSphere.center = glm::vec3(0.0f);
+    box->boundingSphere.radius = glm::length(glm::vec3(halfLength, halfHeight, halfWidth));
+    box->boundingBox.min = glm::vec3(-halfLength, -halfHeight, -halfWidth);
+    box->boundingBox.max = glm::vec3(halfLength, halfHeight, halfWidth);
+
     // 创建VBO
     glGenBuffers(1, &box->VBOPosition);
     glBindBuffer(GL_ARRAY_BUFFER, box->VBOPosition);
@@ -194,6 +320,9 @@ Geometry* Geometry::createBox(float length, float width, float height) {
     glGenBuffers(1, &box->VBOUv);
     glBindBuffer(GL_ARRAY_BUFFER, box->VBOUv);
     glBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);
+    glGenBuffers(1, &box->VBONormal);
+    glBindBuffer(GL_ARRAY_BUFFER, box->VBONormal);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(normals), normals, GL_STATIC_DRAW);
     // 创建EBO
     glGenBuffers(1, &box->EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, box->EBO);
@@ -201,7 +330,7 @@ Geometry* Geometry::createBox(float length, float width, float height) {
     // 创建VAO
     glGenVertexArrays(1, &box->VAO);
     glBindVertexArray(box->VAO);
-    // 加入属性描述信息(0 -> 位置, 1 -> 颜色, 2 -> uv坐标)
+    // 加入属性描述信息(0 -> 位置, 1 -> 颜色, 2 -> uv坐标, 3 -> 法向)
     glBindBuffer(GL_ARRAY_BUFFER, box->VBOPosition);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
@@ -211,6 +340,9 @@ Geometry* Geometry::createBox(float length, float width, float height) {
     glBindBuffer(GL_ARRAY_BUFFER, box->VBOUv);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    glBindBuffer(GL_ARRAY_BUFFER, box->VBONormal);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     // 绑定EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, box->EBO);
     // 解绑VAO
@@ -218,13 +350,14 @@ Geometry* Geometry::createBox(float length, float width, float height) {
     return box;
 }
 
-Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitudeSegments) {
+Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitudeSegments, const glm::vec3 color) {
     Geometry* sphere = new Geometry();
 
-    // 计算出的球体顶点, uv, EBO索引数据存到vector中
+    // 计算出的球体顶点, uv, EBO索引数据以及法向存到vector中
     std::vector<GLfloat> positions{};
     std::vector<GLfloat> uvs{};
     std::vector<GLuint> indices{};
+    std::vector<GLfloat> normals{};
 
     // 计算球体顶点.
     // 双层循环, 计算每条纬线(外循环)与每条经线(内循环)的交点坐标以及uv坐标
@@ -234,19 +367,24 @@ Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitu
         for (int j = 0; j <= longitudeSegments; j++) {
             float theta = 2 * glm::pi<float>() * j / longitudeSegments; // 经线角度
 
-            // 计算球体顶点坐标(极坐标转直角坐标)
-            float x = radius * sin(phi) * cos(theta);
-            float y = radius * cos(phi);
-            float z = radius * sin(phi) * sin(theta);
+            // 计算球体顶点坐标(极坐标转直角坐标, 但是没有乘上半径, 是为了先赋值给顶点法向)
+            float x = sin(phi) * cos(theta);
+            float y = cos(phi);
+            float z = sin(phi) * sin(theta);
 
             // uv坐标直接线性映射即可(当前经/纬线比上经/纬线总条数)
             // 算出1.0的互补数, 以防贴图翻转, 更符合直觉
             float u = 1.0f - (float)j / (float)longitudeSegments;
             float v = 1.0f - (float)i / (float)latitudeSegments;
 
-            positions.push_back(x);
-            positions.push_back(y);
-            positions.push_back(z);
+            // 法线坐标
+            normals.push_back(x);
+            normals.push_back(y);
+            normals.push_back(z);
+
+            positions.push_back(x * radius);
+            positions.push_back(y * radius);
+            positions.push_back(z * radius);
 
             uvs.push_back(u);
             uvs.push_back(v);
@@ -273,8 +411,19 @@ Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitu
     // 绘制的索引数量
     sphere->indicesCount = indices.size();
 
-    // 颜色属性暂且全部设置为白色
-    std::vector<GLfloat> colors(positions.size() * 3, 1.0f);
+    // 颜色属性
+    std::vector<GLfloat> colors{};
+    for (int i = 0; i < positions.size() / 3; ++i) {
+        colors.push_back(color.r);
+        colors.push_back(color.g);
+        colors.push_back(color.b);
+    }
+
+    // 计算包围球和AABB包围盒
+    sphere->boundingSphere.center = glm::vec3(0.0f);
+    sphere->boundingSphere.radius = radius;
+    sphere->boundingBox.min = glm::vec3(-radius, -radius, -radius);
+    sphere->boundingBox.max = glm::vec3(radius, radius, radius);
 
     // 创建VBO
     glGenBuffers(1, &sphere->VBOPosition);
@@ -286,6 +435,9 @@ Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitu
     glGenBuffers(1, &sphere->VBOUv);
     glBindBuffer(GL_ARRAY_BUFFER, sphere->VBOUv);
     glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(float), uvs.data(), GL_STATIC_DRAW);
+    glGenBuffers(1, &sphere->VBONormal);
+    glBindBuffer(GL_ARRAY_BUFFER, sphere->VBONormal);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
     // 创建EBO
     glGenBuffers(1, &sphere->EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere->EBO);
@@ -303,6 +455,9 @@ Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitu
     glBindBuffer(GL_ARRAY_BUFFER, sphere->VBOUv);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    glBindBuffer(GL_ARRAY_BUFFER, sphere->VBONormal);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     // 绑定EBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere->EBO);
     // 解绑VAO
@@ -341,6 +496,13 @@ Geometry* Geometry::createPlane(float length, float width, float segments) {
     };
     // 顶点索引数量
     plane->indicesCount = sizeof(indices) / sizeof(unsigned int);
+
+    // 计算包围球和AABB包围盒
+    plane->boundingSphere.center = glm::vec3(0.0f);
+    plane->boundingSphere.radius = glm::length(glm::vec3(halfLength, 0.0f, halfWidth));
+    // 平面增加些许厚度以免碰撞检测不到
+    plane->boundingBox.min = glm::vec3(-halfLength, -0.005f, -halfWidth);
+    plane->boundingBox.max = glm::vec3(halfLength, 0.005f, halfWidth);
 
     // 创建VBO
     glGenBuffers(1, &plane->VBOPosition);
