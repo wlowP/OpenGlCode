@@ -470,8 +470,9 @@ Geometry* Geometry::createPlane(float length, float width, float segments) {
     // 计算包围球和AABB包围盒
     plane->boundingSphere.center = glm::vec3(0.0f);
     plane->boundingSphere.radius = glm::length(glm::vec3(halfLength, 0.0f, halfWidth));
-    plane->boundingBox.min = glm::vec3(-halfLength, 0.0f, -halfWidth);
-    plane->boundingBox.max = glm::vec3(halfLength, 0.0f, halfWidth);
+    // 平面增加些许厚度以免碰撞检测不到
+    plane->boundingBox.min = glm::vec3(-halfLength, -0.005f, -halfWidth);
+    plane->boundingBox.max = glm::vec3(halfLength, 0.005f, halfWidth);
 
     // 创建VBO
     glGenBuffers(1, &plane->VBOPosition);

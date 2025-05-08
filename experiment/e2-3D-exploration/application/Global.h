@@ -18,7 +18,7 @@
 inline std::vector<GeometryInstance*> geometries;
 // 迷宫参数
 // 迷宫尺寸(须要为奇数, 因为最外层是墙.mazeRows为Y轴方向, mazeCols为X轴方向)
-inline int mazeRows = 15, mazeCols = 15;
+inline int mazeRows = 31, mazeCols = 31;
 // 迷宫终点位置, 默认在对角最远端x = mazeCols - 2, y = mazeRows - 2
 inline glm::vec3 goalPos(mazeCols - 2, 0.5f, -mazeRows + 2);
 // 游戏是否结束

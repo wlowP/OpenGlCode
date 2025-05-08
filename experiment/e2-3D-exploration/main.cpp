@@ -74,16 +74,27 @@ void prepareGeometries() {
     reisenBlock->loadTexture("assets/texture/reisen.jpg");
     Geometry* brickBlock = Geometry::createBox(1.0f, 1.0f, 1.0f);
     brickBlock->loadTexture("assets/texture/bricks.png");
+    Geometry* stoneBrickBlock = Geometry::createBox(1.0f, 1.0f, 1.0f);
+    stoneBrickBlock->loadTexture("assets/texture/stone_bricks.png");
     Geometry* goldBlock = Geometry::createBox(1.0f, 1.0f, 1.0f);
     goldBlock->loadTexture("assets/texture/gold_block.png");
     Geometry* floorPlane = Geometry::createPlane(80.0f, 80.0f, 40);
     floorPlane->loadTexture("assets/texture/wall.jpg");
+    Geometry* wallSphere = Geometry::createSphere(5, 60, 60);
+    wallSphere->loadTexture("assets/texture/wall.jpg");
 
     // 几何体实例
-    auto* reisenBlockInstance = new GeometryInstance(reisenBlock, 0, 1, -5);
+    auto* reisenBlockInstance = new GeometryInstance(reisenBlock, 0, 1, -50);
     reisenBlockInstance->scale(glm::vec3(2, 2, 2));
     reisenBlockInstance->updateMatrix = glm::rotate(reisenBlockInstance->updateMatrix, glm::radians(0.1f), glm::vec3(0, 1, 0));
     geometries.push_back(reisenBlockInstance);
+
+    auto* wallSphereInstance = new GeometryInstance(wallSphere, 0.0f, 15, 0);
+    geometries.push_back(wallSphereInstance);
+    wallSphereInstance->updateMatrix =
+        glm::translate(wallSphereInstance->updateMatrix, wallSphereInstance->getWorldCenter() * 1.0f) *
+        glm::rotate(wallSphereInstance->updateMatrix, glm::radians(0.5f), glm::vec3(0, 1, 0)) *
+        glm::translate(wallSphereInstance->updateMatrix, wallSphereInstance->getWorldCenter() * -1.0f);
 
     // 生成迷宫
     // 终点处的金块
@@ -106,6 +117,8 @@ void prepareGeometries() {
                 auto* brickBlockInstance = new GeometryInstance(brickBlock, j, 0.5f, -i);
                 // brickBlockInstance->scale(glm::vec3(2, 2, 2));
                 geometries.push_back(brickBlockInstance);
+                brickBlockInstance = new GeometryInstance(stoneBrickBlock, j, 1.5f, -i);
+                geometries.push_back(brickBlockInstance);
             }
             cout << maze[i][j] << " ";
         }
@@ -125,7 +138,7 @@ void prepareCamera() {
         0.1f, 1000.0f
     );
     // 设置相机初始位置
-    perspectiveCamera->position = glm::vec3(1.0f, 0.2f, -1.0f);
+    perspectiveCamera->position = glm::vec3(1.0f, 0.25f, -1.0f);
     // 设置当前的相机
     currentCamera = perspectiveCamera;
 

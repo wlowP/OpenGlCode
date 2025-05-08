@@ -40,13 +40,13 @@ private:
     float moveSpeed = 0.02f;
     // 碰撞检测: 相机的包围球和AABB包围盒, 默认尺寸是0.1f
     BoundingSphere boundingSphere{ glm::vec3(0.0f), 0.1f };
-    BoundingBox boundingBox{ glm::vec3{-0.1f}, glm::vec3{0.1f} };
+    BoundingBox boundingBox{ glm::vec3{-0.05f}, glm::vec3{0.05f} };
 
     // 相机控制器的移动策略, 默认是允许任意方向的移动(构造函数中初始化)
     GameControlMoveStrategy* moveStrategy;
 
     // 检测相机移动stride距离时是否会与几何体实例相撞
-    bool checkCollision(GeometryInstance* b, const glm::vec3& stride);
+    bool checkCollision(GeometryInstance* b, const glm::vec3& stride, glm::vec3& normal);
 
     void pitch(float angle);
     void yaw(float angle);

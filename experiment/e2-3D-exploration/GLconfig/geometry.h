@@ -28,6 +28,36 @@ inline bool isCollide(const BoundingBox& a, const BoundingBox& b) {
            (a.min.y <= b.max.y && a.max.y >= b.min.y) &&
            (a.min.z <= b.max.z && a.max.z >= b.min.z);
 }
+// 检测包围球碰撞并设置碰撞法向
+inline bool isCollide(const BoundingSphere& a, const BoundingSphere& b, glm::vec3& normal) {
+    glm::vec3 delta = b.center - a.center;
+    if (glm::length(delta) > (a.radius + b.radius)) {
+        return false; // 没有碰撞
+    }
+    normal = glm::normalize(delta); // 碰撞法向
+    return true; // 有碰撞
+}
+// 检测 AABB 碰撞并设置碰撞法向
+inline bool isCollide(const BoundingBox& a, const BoundingBox& b, glm::vec3& normal) {
+    glm::vec3 overlap;
+    overlap.x = std::min(a.max.x, b.max.x) - std::max(a.min.x, b.min.x);
+    overlap.y = std::min(a.max.y, b.max.y) - std::max(a.min.y, b.min.y);
+    overlap.z = std::min(a.max.z, b.max.z) - std::max(a.min.z, b.min.z);
+
+    if (overlap.x <= 0 || overlap.y <= 0 || overlap.z <= 0)
+        return false;
+
+    // 找到最小重叠轴
+    float minOverlap = std::min(overlap.x, std::min(overlap.y, overlap.z));
+    if (minOverlap == overlap.x) {
+        normal = (a.min.x < b.min.x) ? glm::vec3(-1, 0, 0) : glm::vec3(1, 0, 0);
+    } else if (minOverlap == overlap.y) {
+        normal = (a.min.y < b.min.y) ? glm::vec3(0, -1, 0) : glm::vec3(0, 1, 0);
+    } else {
+        normal = (a.min.z < b.min.z) ? glm::vec3(0, 0, -1) : glm::vec3(0, 0, 1);
+    }
+    return true;
+}
 
 class Geometry {
 public:

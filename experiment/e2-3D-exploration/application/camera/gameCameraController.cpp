@@ -79,6 +79,19 @@ void GameCameraController::yaw(float angle) {
     camera->up = rotate * glm::vec4(camera->up, 0.0f);
 }
 
+glm::vec3 handleCollision(const glm::vec3& moveDir, const glm::vec3& normal) {
+    // 计算移动向量在法线方向的分量
+    float dot = glm::dot(moveDir, normal);
+    glm::vec3 projected = moveDir - dot * normal;
+
+    // 可选：标准化以保持原速，防止速度损失
+    if(glm::length(projected) > 0.001f) {
+        projected = glm::normalize(projected) * glm::length(moveDir);
+    }
+
+    return projected;
+}
+
 void GameCameraController::update() {
     // 最终移动方向, 注意别忘了归一化
     glm::vec3 direction;
@@ -117,11 +130,15 @@ void GameCameraController::update() {
             return;
         }
 
+        // 碰撞法向
+        glm::vec3 normal(0.0f);
         // 检测碰撞
         for (const auto g : geometries) {
-            if (g->detectCollision && checkCollision(g, stride)) {
+            if (g->detectCollision && checkCollision(g, stride, normal)) {
                 // std::cout << "collision detected" << std::endl;
-                return;
+
+                stride = handleCollision(stride, normal);
+                // return;
             }
         }
         // std::cout << "camara position: " << glm::to_string(camera->position) << std::endl;
@@ -141,12 +158,12 @@ void GameCameraController::update() {
     // 不移动的时候也可以检测被动的碰撞
 }
 
-bool GameCameraController::checkCollision(GeometryInstance* b, const glm::vec3& stride) {
+bool GameCameraController::checkCollision(GeometryInstance* b, const glm::vec3& stride, glm::vec3& normal) {
     // 阶段1：包围球快速排除
     auto sphereA = getBoundingSphere();
     sphereA.center += stride;
     auto sphereB = b->getBoundingSphere();
-    if (!isCollide(sphereA, sphereB)) {
+    if (!isCollide(sphereA, sphereB, normal)) {
         return false;
     }
 
@@ -155,7 +172,7 @@ bool GameCameraController::checkCollision(GeometryInstance* b, const glm::vec3& 
     boxA.min += stride;
     boxA.max += stride;
     auto boxB = b->getBoundingBox();
-    if (!isCollide(boxA, boxB)) {
+    if (!isCollide(boxA, boxB, normal)) {
         return false;
     }
 
