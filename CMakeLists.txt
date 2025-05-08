@@ -26,6 +26,7 @@ set(CMAKE_EXE_LINKER_FLAGS -static)
 # =======================================================
 add_subdirectory(experiment/e1-paint)
 add_subdirectory(experiment/e2-3D-exploration)
+add_subdirectory(experiment/e3-model-light)
 add_subdirectory(1-GLFW-window)
 add_subdirectory(2-glad)
 add_subdirectory(3-Application)

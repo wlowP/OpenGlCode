@@ -17,7 +17,7 @@ include_directories(
 )
 # 应用程序头文件, 包含窗体对象, 尺寸等(适配相机系统), 以及相机系统类, 属于应用程序级别(因为其中并没有OpenGL的相关代码, 只是glm库的使用)
 add_subdirectory(application)
-# 几何类头文件, 包含VBO, VAO, EBO等的创建和绑定
+# 几何类头文件, 包含VBO, VAO, EBO等的创建和绑定(包围盒+包围球用于碰撞检测)
 add_subdirectory(GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
