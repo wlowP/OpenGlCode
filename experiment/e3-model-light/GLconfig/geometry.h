@@ -58,6 +58,14 @@ inline bool isCollide(const BoundingBox& a, const BoundingBox& b, glm::vec3& nor
     }
     return true;
 }
+// 几何体的材质属性
+struct Material {
+    // ambient 和 diffuse 一般就是物体本身颜色
+    glm::vec3 ambient; // 环境光照下的颜色
+    glm::vec3 diffuse; // 漫反射光照下的颜色
+    glm::vec3 specular; // 镜面高光的颜色
+    float shininess; // 镜面高光的散射/半径. 值越大, 散射越小(集中)
+};
 
 class Geometry {
 public:
@@ -69,6 +77,13 @@ public:
     BoundingSphere boundingSphere;
     // 模型空间的AABB包围盒
     BoundingBox boundingBox;
+    // 材质默认为白色
+    Material material = {
+        glm::vec3(1, 1, 1),
+        glm::vec3(1, 1, 1),
+        glm::vec3(1, 1, 1),
+        32
+    };
 
     GLuint getVAO() const { return VAO; }
     GLuint getIndicesCount() const { return indicesCount; }
@@ -102,7 +117,7 @@ public:
     // longitudeCount等于经线数量, latitudeCount等于纬线数量 + 1. 实际上都等于经纬线方向上被划分的段数
     static Geometry* createSphere(float radius, int latitudeSegments, int longitudeSegments, glm::vec3 color);
     // 创建平面
-    // 长宽分别对应X, Z轴, segments: 平面材质被划分的次数. 当segment=2时, 纹理贴图会在平面上重复2*2=4次
+    // 长宽分别对应X, Z轴, segments: 平面材质被划分的次数. 例如: 当segment=2时, 纹理贴图会在平面上重复2*2=4次
     static Geometry* createPlane(float length, float width, float segments = 1.0f);
 
 private:
@@ -114,7 +129,7 @@ private:
     GLuint VBONormal{0};
     GLuint EBO{0};
 
-    TextureMipMap* texture{nullptr}; // 纹理对象
+    Texture* texture{nullptr}; // 纹理对象
     GLenum primitiveType{GL_TRIANGLES}; // 绘制时的图元类型(三角形, 线框等)
 
     // 需要绘制的EBO索引数量(注意: 不是顶点数量)

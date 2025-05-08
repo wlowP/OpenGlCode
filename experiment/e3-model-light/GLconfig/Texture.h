@@ -2,29 +2,31 @@
 // Created by ROG on 2025/4/3.
 //
 
-#ifndef TEXTUREMIPMAP_H
-#define TEXTUREMIPMAP_H
+#ifndef TEXTURE_H
+#define TEXTURE_H
 #include "core.h"
 #include <string>
 
 /**
  * 纹理类, 调用了OpenGL的自动MipMap实现
  */
-class TextureMipMap {
+class Texture {
 public:
     /**
      * 创建纹理对象
      * @param path 文件路径
      * @param textureUnit 要绑定的纹理单元号
      */
-    TextureMipMap(const std::string& path, int textureUnit);
-    ~TextureMipMap();
+    Texture(const std::string& path, int textureUnit);
+    ~Texture();
 
     // 将纹理对象绑定到当前激活的纹理单元上
     void bindTexture() const;
     // 将纹理对象绑定到指定的纹理单元上
     void bindTexture(int textureUnit);
 
+    // 仅加载纹理返回纹理对象ID, 不绑定纹理单元
+    static GLuint TextureFromFile(const char* path, const std::string& directory);
 private:
     GLuint texture{0}; // OpenGL纹理对象
     int width{0}; // 纹理宽高
@@ -34,4 +36,4 @@ private:
     int textureUnit{0};
 };
 
-#endif //TEXTUREMIPMAP_H
+#endif //TEXTURE_H

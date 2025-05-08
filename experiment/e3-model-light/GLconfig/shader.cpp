@@ -90,7 +90,7 @@ void Shader::setVec3(const std::string& name, const float v0, const float v1, co
 void Shader::setVec3(const std::string& name, const float* values) const {
     glUniform3fv(glGetUniformLocation(program, name.c_str()), 1, values);
 }
-void Shader::setVec3(const std::string& name, glm::vec3& value) const {
+void Shader::setVec3(const std::string& name, const glm::vec3& value) const {
     glUniform3fv(glGetUniformLocation(program, name.c_str()), 1, &value[0]);
 }
 void Shader::setInt(const std::string& name, const int value) const {

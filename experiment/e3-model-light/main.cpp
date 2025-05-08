@@ -10,16 +10,19 @@
 #include "GLconfig/geometry.h"
 #include "GLconfig/shader.h"
 #include "GLconfig/Texture.h"
+#include "application/model.h"
 
 // 渲染的几何体对象
 GeometryInstance* geometry = nullptr;
 // 光源对象
 GeometryInstance* lightSource = nullptr;
+// 模型对象
+Model* model = nullptr;
 // 封装的着色器程序对象
 Shader* shader = nullptr;
 Shader* lightSourceShader = nullptr;
 // 纹理对象
-TextureMipMap* texture = nullptr;
+Texture* texture = nullptr;
 
 // 相机及其控制器对象
 PerspectiveCamera* perspectiveCamera = nullptr;
@@ -67,8 +70,8 @@ void mouseScrollCallback(const double offsetX, const double offsetY) {
 // 定义和编译着色器
 void prepareShader() {
     shader = new Shader(
-        "assets/shader/default/vertex.glsl",
-        "assets/shader/default/fragment.glsl"
+        "assets/shader/lightMap/vertex.glsl",
+        "assets/shader/lightMap/fragment.glsl"
     );
     lightSourceShader = new Shader(
         "assets/shader/lightSource/vertex.glsl",
@@ -78,19 +81,26 @@ void prepareShader() {
 
 // 创建几何体, 获取对应的VAO
 void prepareGeometries() {
+    // 场景几何体
     Geometry* box = Geometry::createBox(1, 1, 1, glm::vec3(1.0, 0.5, 0.31));
     box->loadTexture("assets/texture/reisen.jpg");
-    geometry = new GeometryInstance(box);
+    geometry = new GeometryInstance(box, -4, 0, 0);
     // geometry->scale(3, 3, 3);
-    geometry->updateMatrix = glm::rotate(geometry->updateMatrix, glm::radians(-0.1f), glm::vec3(0, 1, 0));
+    geometry->updateMatrix =
+        glm::translate(geometry->updateMatrix, geometry->getWorldCenter() * 1.0f) *
+        glm::rotate(geometry->updateMatrix, glm::radians(-0.1f), glm::vec3(0, 1, 0)) *
+        glm::translate(geometry->updateMatrix, geometry->getWorldCenter() * -1.0f);
     geometry->useTexture = false;
 
     // 光源几何体
     Geometry* lightBox = Geometry::createSphere(1, 60, 60, glm::vec3(1, 1, 1));
     lightSource = new GeometryInstance(lightBox, 1.2, 1, 2);
-    lightSource->scale(0.3, 0.3, 0.3);
+    lightSource->scale(0.1, 0.1, 0.1);
     lightSource->updateMatrix = glm::rotate(lightSource->updateMatrix, glm::radians(0.2f), glm::vec3(0, 1, 0));
     lightSource->useTexture = false;
+
+    // 加载的几何模型
+    model = new Model("D:/code/repositories/OpenGlCode/experiment/e3-model-light/assets/model/eagle/eagle.obj");
 }
 
 // 摄像机状态
@@ -162,12 +172,18 @@ void render() {
     // 通过uniform将采样器绑定到0号纹理单元上
     // -> 让采样器知道要采样哪个纹理单元
     shader->setInt("sampler", 0);
+    // 同时也将纹理设置给物体光照材质的采样器(光照贴图. 包含漫反射贴图和镜面反射贴图)
+    shader->setInt("material.diffuse", 0);
+    shader->setInt("material.specular", 0);
     shader->setMat4("viewMatrix", currentCamera->getViewMatrix());
     shader->setMat4("projectionMatrix", currentCamera->getProjectionMatrix());
 
     // 光源属性
     shader->setVec3("lightPosition", lightSource->getWorldCenter());
     shader->setVec3("viewPosition", currentCamera->position);
+    shader->setVec3("lightSource.ambient", 0.2f, 0.2f, 0.2f);
+    shader->setVec3("lightSource.diffuse", 0.5f, 0.5f, 0.5f);
+    shader->setVec3("lightSource.specular", 0.8f, 0.8f, 0.8f);
 
     const Geometry* geometryModel = geometry->geometry;
     // 绑定几何体对应的模型的VAO
@@ -177,8 +193,19 @@ void render() {
     // 设置变换矩阵以及法线矩阵
     shader->setMat4("model", geometry->getModelMatrix());
     shader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(geometry->getModelMatrix()))));
-    // 绘制几何体
+    // 物体材质属性
+    shader->setVec3("material.ambient", geometryModel->material.ambient);
+    shader->setVec3("material.diffuse", geometryModel->material.diffuse);
+    shader->setVec3("material.specular", geometryModel->material.specular);
+    shader->setFloat("material.shininess", geometryModel->material.shininess);
     glDrawElements(geometryModel->getPrimitiveType(), geometryModel->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
+
+    // ======绘制模型
+    auto transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f)); // 把模型移到世界原点
+    transform = glm::scale(transform, glm::vec3(0.15f, 0.15f, 0.15f));	// 有些模型太大了缩小一点
+    shader->setMat4("model", transform);
+    model->draw(shader);
 
     Shader::end();
 }
@@ -188,7 +215,7 @@ void render() {
  */
 int main() {
     APP->test();
-    if (!APP->init(800, 600, "VBO, VAO, EBO等封装为几何体类")) {
+    if (!APP->init(800, 600, "光照与模型加载")) {
         std::cerr << "failed to initialize GLFW" << std::endl;
         return -1;
     }

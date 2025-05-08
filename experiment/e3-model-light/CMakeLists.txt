@@ -9,20 +9,21 @@ add_subdirectory(GLconfig)
 
 # glad的库是个源代码文件, 所以得编译进可执行文件
 add_executable(e3-model-light ${PROJECT_SOURCE_DIR}/glad/glad.c main.cpp)
-
 target_link_libraries(e3-model-light
         ${PROJECT_SOURCE_DIR}/lib/libglfw3.a
-        errorCheck
+        ${PROJECT_SOURCE_DIR}/lib/libassimp-5.dll
         e3-application-with-camera
         e3-glConfig
 )
 
 # ======资源文件拷贝======
 file(GLOB ASSETS
-        # 着色器源代码(加载了MVP矩阵变换)
+        # 着色器源代码(加载了MVP矩阵变换, blinn-phong光照)
         ./assets
         # 纹理贴图
         ${PROJECT_SOURCE_DIR}/assets
+        # assimp的动态库
+        ${PROJECT_SOURCE_DIR}/lib/libassimp-5.dll
 )
 
 file(COPY ${ASSETS} DESTINATION ${CMAKE_BINARY_DIR}/experiment/e3-model-light)

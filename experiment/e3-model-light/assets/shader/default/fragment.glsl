@@ -23,7 +23,7 @@ void main() {
     if (useTexture) {
         FragColor = texture(sampler, uvTexCoord);
     } else {
-        // 加载光照. blinn-phong模型
+        // 加载光照. blinn-phong模型(物体颜色直接取自顶点颜色VAO)
         // ===1. 环境光
         float ambientStrength = 0.1f;
         vec3 ambient = ambientStrength * lightColor;

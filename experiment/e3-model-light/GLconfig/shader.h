@@ -27,7 +27,7 @@ public:
     void setBool(const std::string& name, bool value) const;
     void setVec3(const std::string& name, float v0, float v1, float v2) const;
     void setVec3(const std::string& name, const float* values) const;
-    void setVec3(const std::string& name, glm::vec3& value) const;
+    void setVec3(const std::string& name, const glm::vec3& value) const;
     void setInt(const std::string& name, int value) const;
     void setFloat(const std::string& name, float value) const;
     void setMat4(const std::string& name, const glm::mat4& mat) const;
@@ -35,7 +35,6 @@ public:
 private:
     // 对于shader程序, 检查编译错误; 对于program, 检查链接错误
     void checkShaderError(GLuint target, const std::string& type);
-private:
     GLuint program{0};
 };
 

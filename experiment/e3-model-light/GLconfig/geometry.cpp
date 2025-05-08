@@ -50,7 +50,7 @@ void GeometryInstance::initBoundingSpace() {
 }
 
 void Geometry::loadTexture(const std::string& filePath) {
-    texture = new TextureMipMap(filePath, 0);
+    texture = new Texture(filePath, 0);
 }
 
 void Geometry::bind() const {
@@ -259,6 +259,9 @@ Geometry* Geometry::createBox(float length, float width, float height, const glm
         colors[i * 3 + 1] = color.g;
         colors[i * 3 + 2] = color.b;
     }
+    // Material材质属性的颜色
+    box->material.ambient = color;
+    box->material.diffuse = color;
     // 纹理坐标数据
     float uvs[] = {
         // 正面
@@ -418,6 +421,9 @@ Geometry* Geometry::createSphere(float radius, int latitudeSegments, int longitu
         colors.push_back(color.g);
         colors.push_back(color.b);
     }
+    // Material材质属性的颜色
+    sphere->material.ambient = color;
+    sphere->material.diffuse = color;
 
     // 计算包围球和AABB包围盒
     sphere->boundingSphere.center = glm::vec3(0.0f);
