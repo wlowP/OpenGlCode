@@ -47,6 +47,9 @@ void keyCallback(const int key, const int action, int mods) {
         APP->closeWindow();
         return;
     }
+    if (key == GLFW_KEY_L && action == GLFW_RELEASE) {
+        model->smooth();
+    }
     currentCameraController->onKeyboard(key, action, mods);
 }
 
@@ -100,7 +103,7 @@ void prepareGeometries() {
     lightSource->useTexture = false;
 
     // 加载的几何模型
-    model = new Model("D:/code/repositories/OpenGlCode/experiment/e3-model-light/assets/model/eagle/eagle.obj");
+    model = new Model("D:/code/repositories/OpenGlCode/experiment/e3-model-light/assets/model/dog/dog.obj", 1, 0.3f, -0.53f * 0.3f);
 }
 
 // 摄像机状态
@@ -118,14 +121,14 @@ void prepareCamera() {
         orthoBoxSize, -orthoBoxSize
     );
     // 设置当前的相机
-    currentCamera = perspectiveCamera;
+    currentCamera = orthographicCamera;
 
     // ===相机控制器对象===
     trackballCameraController = new TrackballCameraController();
     gameCameraController = new GameCameraController();
 
     // 设置当前的相机控制器
-    currentCameraController = gameCameraController;
+    currentCameraController = trackballCameraController;
     // 游戏控制模式下隐藏并捕获鼠标光标
     if (currentCameraController == gameCameraController) {
         APP->setCursorVisible(false);
@@ -203,7 +206,7 @@ void render() {
     // ======绘制模型
     auto transform = glm::mat4(1.0f);
     transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f)); // 把模型移到世界原点
-    transform = glm::scale(transform, glm::vec3(0.15f, 0.15f, 0.15f));	// 有些模型太大了缩小一点
+    transform = glm::scale(transform, glm::vec3(0.015, 0.015, 0.015));	// 有些模型太大了缩小一点
     // 记得传递法线矩阵, 否则光照会异常(比如明明光源在背后但是前面却反光)
     shader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(transform))));
     shader->setMat4("model", transform);

@@ -11,6 +11,10 @@ Model::Model(const char* path) {
     loadModel(path);
 }
 
+Model::Model(const char* path, int iteration, float lambda, float mu): iteration(iteration), lambda(lambda), mu(mu) {
+    loadModel(path);
+}
+
 void Model::draw(const Shader* shader) const {
     for(auto & mesh : meshes)
         mesh.draw(shader);
@@ -23,13 +27,14 @@ void Model::loadModel(std::string path) {
      *  aiProcess_Triangulate: 如果模型不是全部由三角形组成, 则将其中所有图元转变为三角形
      *  aiProcess_FlipUVs: 读取时反转纹理坐标的y轴
      */
-    const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
         return;
     }
     directory = path.substr(0, path.find_last_of('/'));
+    this->path = path;
 
     processNode(scene->mRootNode, scene);
 }
@@ -45,6 +50,14 @@ void Model::processNode(aiNode* node, const aiScene* scene) {
         processNode(node->mChildren[i], scene);
     }
 }
+
+void Model::smooth() {
+    for(auto & mesh : meshes) {
+        mesh.smoothWithTaubin(iteration, lambda, mu);
+    }
+    iteration = iteration + 1;
+}
+
 
 Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     std::vector<Vertex> vertices;

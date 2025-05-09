@@ -36,10 +36,15 @@ public:
     /*  函数  */
     Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<TextureInfo>& textures);
     void draw(const Shader* shader) const;
+
+    void smoothWithTaubin(int iterations = 5, float lambda = 0.5f, float mu = -0.53f);
+    void recalculateNormals();
 private:
     /*  渲染数据  */
     unsigned int VAO, VBO, EBO;
     /*  函数  */
     void setupMesh();
+    std::unordered_set<unsigned int> boundaryVertices; // 存储边界顶点索引
+    void detectBoundaryVertices();                     // 检测边界顶点
 };
 #endif //MESH_H
