@@ -112,7 +112,6 @@ std::vector<TextureInfo> Model::loadMaterialTextures(aiMaterial *mat, aiTextureT
         if(!skip) {
             // 如果纹理还没有被加载，则加载它
             TextureInfo texture;
-
             texture.id = Texture::TextureFromFile(str.C_Str(), directory);
             texture.type = typeName;
             texture.path = str.C_Str();

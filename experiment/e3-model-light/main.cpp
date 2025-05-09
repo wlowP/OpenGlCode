@@ -204,6 +204,8 @@ void render() {
     auto transform = glm::mat4(1.0f);
     transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 0.0f)); // 把模型移到世界原点
     transform = glm::scale(transform, glm::vec3(0.15f, 0.15f, 0.15f));	// 有些模型太大了缩小一点
+    // 记得传递法线矩阵, 否则光照会异常(比如明明光源在背后但是前面却反光)
+    shader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(transform))));
     shader->setMat4("model", transform);
     model->draw(shader);
 
